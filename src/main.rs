@@ -8,9 +8,11 @@ use std::fs;
 use std::io::{self, BufRead};
 use std::ops::Index;
 use std::path::Path;
-use smt2parser::{CommandStream, concrete};
+use smt2parser::{CommandStream, concrete, visitors};
 use lexpr;
 use lexpr::Value;
+use smt2parser::concrete::{parse_simple_attribute_value, Sort};
+use smt2parser::concrete::Sort::Simple;
 
 #[derive(Clone, Copy)]
 struct Parser;
@@ -55,7 +57,27 @@ fn parse_set_logic(solver: & mut Solver<Parser>, arg: & str, rest: & [Value]){
     }
 }
 
-fn parse_def_fun(solver: & mut Solver<Parser>, rest: & [Value]){
+fn parse_sort(sort: &Sort) -> Option<String>{
+    if let concrete::Sort::Simple {identifier} = &sort{
+        if let visitors::Identifier::Indexed {symbol, indices} = &identifier{
+            //println!("{}", symbol.to_string());
+            //println!("{}", indices[0].to_string());
+            //println!("{}", ret_str);
+            Some(format!("{} {}", symbol.to_string(), indices[0].to_string()))
+        } else if let visitors::Identifier::Simple {symbol} = &identifier{
+            Some(symbol.to_string())
+        }
+        else{
+            println!("cannot parse: {}", identifier.to_string());
+            None
+        }
+    }else{
+        println!("cannot parse: {}", sort.to_string());
+        None
+    }
+}
+
+fn parse_def_fun(solver: & mut Solver<Parser>, sexp: & Value){
     ///
     /// (define-fun udivtotal ((a (_ BitVec 4)) (b (_ BitVec 4))) (_ BitVec 4)
     ///    (ite (= b #x0) #xF (bvudiv a b)))
@@ -65,48 +87,94 @@ fn parse_def_fun(solver: & mut Solver<Parser>, rest: & [Value]){
     /// ).unwrap()
     /// ```
 
-    //println!("{}", rest[0].as_symbol().unwrap());
-    let symbol = rest[0].as_symbol().unwrap();
+    let sexp_string = sexp.to_string();
+    let stream = CommandStream::new(&sexp_string.as_bytes()[..], concrete::SyntaxBuilder, Some("".to_string()));
+    let commands = stream.collect::<Result<Vec<_>, _>>().unwrap();
 
-    // parse args ((sym1 (_ type1))(sym2 (_ type2)))
-    let args = &rest[1];
+    if let concrete::Command::DefineFun{sig, term} = &commands[0]{
+        // function signature
+        //println!("{}", sig.name.to_string());
 
-    // parse out (_ type)
-    let out = &rest[2];
+        let mut params = Vec::new();
+        for ( symbol, sort )  in &sig.parameters{
+            //println!("{}", symbol);
+            let param_type = parse_sort(sort).unwrap();
+            //println!("{}",param_type);
+            params.push((symbol.to_string(), param_type.to_string()));
+        }
+        let output_type = parse_sort(&sig.result).unwrap();
+        //println!("{}", output_type);
 
-    // parse body (any)
-    let body = &rest[3];
-    for sym in rest{
-        println!("{}", sym);
-    }
-
-    solver.define_fun(
-       symbol.to_string(), & [ ("a", "BitVec 4"), ("b", "BitVec 4")], "BitVec 4", "(ite (= b 0) 15 (bvudiv a b))"
-    ).unwrap();
-
+        // function body
+        //println!("{}", term.to_string());
+        solver.define_fun(sig.name.to_string(), &params, output_type, term.to_string()).unwrap();
+        // solver.define_fun(
+        //    symbol.to_string(), & [ ("a", "BitVec 4"), ("b", "BitVec 4")], "BitVec 4", "(ite (= b 0) 15 (bvudiv a b))"
+        // ).unwrap();
+    } else { println!("wrong type of sexpr in define-fun"); }
 }
 
-fn parse_sexp(solver: & mut Solver<Parser>, sexp: & str, rest: & [Value]){
+fn parse_decl_var(solver: & mut Solver<Parser>, sexp: & Value){
+    ///
+    /// (declare-var s (_ BitVec 4))
+    /// ```rust
+    /// solver.declare_const( "s", "BitVec 4").unwrap();
+    /// ```
+
+    let mut symbol = &sexp.to_vec().unwrap()[0];
+    let mut sort = &sexp.to_vec().unwrap()[1];
+    let mut new_sexp = format!("(declare-const {} {})", symbol.to_string(), sort.to_string());
+
+    let stream = CommandStream::new(&new_sexp.as_bytes()[..], concrete::SyntaxBuilder, Some("".to_string()));
+    let commands = stream.collect::<Result<Vec<_>, _>>().unwrap();
+
+    if let concrete::Command::DeclareConst{symbol, sort} = &commands[0]{
+        // variable name
+        //println!("{}", symbol.to_string());
+
+        let var_type = parse_sort(sort).unwrap();
+        //println!("{}", var_type);
+        solver.declare_const(symbol.to_string(), var_type).unwrap();
+
+    } else { println!("wrong type of sexpr in declare-var"); }
+}
+
+fn parse_sexp(solver: & mut Solver<Parser>, sexp: &Value){
     //println!("{}", sexp);
-    match sexp
+    let vec_sexp = sexp.to_vec().unwrap();
+    match vec_sexp[0].to_string().as_str()
     {
         "set-logic" => {
-            let mut arg = rest[0].as_symbol().unwrap();
-            parse_set_logic(solver, arg, &rest[1..]);
+            let mut arg = sexp[1].as_symbol().unwrap();
+            parse_set_logic(solver, arg, &vec_sexp[2..]);
         },
-        "synth-fun" => {},
-        "declare-var" => {},
+        "synth-fun" => {
+
+        },
+        "declare-var" => {
+
+            // Variable maybe need to be stored specially
+            parse_decl_var(solver, &sexp);
+        },
         "define-fun" => {
-            parse_def_fun(solver, &rest);
+            parse_def_fun(solver, &sexp);
         },
-        _ => {}
+        "constraint" =>{
+
+        },
+        "check-synth" =>{
+
+        }
+        _ => {
+            println!("unhandled command: {}", sexp.to_string())
+        }
     }
 }
 
-fn main() {
+fn parse_file(filename: &str) -> Solver<Parser>{
     let mut solver = Solver::default_z3(Parser).unwrap();
-    // File hosts must exist in current path before this produces output
-    let filename = "./benchmarks/lib/General_Track/bv-conditional-inverses/find_inv_bvsge_bvadd_4bit.sl";
+    println!("Parsing {}", filename);
+    //let filename = "./benchmarks/lib/General_Track/bv-conditional-inverses/find_inv_bvsge_bvadd_4bit.sl";
     // Consumes the iterator, returns an (Optional) String
     let data = fs::read(filename).expect("Unable to read file");
     let mut lexpr_ = lexpr::Parser::from_slice(data.as_slice());
@@ -116,7 +184,7 @@ fn main() {
             Ok(v) => {
                 match v {
                     Some(sexp) => {
-                        parse_sexp(& mut solver, sexp[0].as_symbol().unwrap(), &sexp.to_vec().unwrap()[1..]);
+                        parse_sexp(& mut solver, &sexp);
                     }
                     None => {
                         break;
@@ -126,12 +194,21 @@ fn main() {
             Err(e) => break,
         }
     }
+    solver
+}
+
+fn main() {
+
+    let paths = fs::read_dir("./benchmarks/lib/General_Track/bv-conditional-inverses/").unwrap();
+
+    for path in paths {
+        let mut solver = parse_file(path.unwrap().path().to_str().unwrap());
+    }
 
     //let stream = CommandStream::new(&data.as_slice()[..], concrete::SyntaxBuilder, Some("".to_string()));
     //let commands = stream.collect::<Result<Vec<_>, _>>().unwrap();
     println!("{}", "hello");
-
-
+    
 }
 
 fn test_z3(){
