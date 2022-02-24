@@ -8,9 +8,12 @@ edition = "2021"
 [dependencies]
 z3 = {version="0.11.2", features = ["static-link-z3"]}
 egg = "0.7.1"
-rsmt2 = "0.14.1"
+#rsmt2 = "0.14.1"
 smt2parser = "0.6.1"
 regex = "1.5.4"
 
 [dependencies.lexpr]
 path = "./parser" # Make the parser local because I modified how it treat hex number
+
+[dependencies.rsmt2]
+path = "./rsmt2" # Make the rsmt2 local because I added simplify for quick_verify

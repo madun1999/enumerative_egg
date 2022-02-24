@@ -13,8 +13,14 @@ use smt2parser::{CommandStream, concrete, visitors};
 use lexpr;
 use lexpr::parse::{KeywordSyntax, Options, Read, SliceRead};
 use lexpr::Value;
+use rsmt2::prelude::{Expr2Smt, Sym2Smt};
 use smt2parser::concrete::{parse_simple_attribute_value};
 use smt2parser::concrete::Sort::Simple;
+
+pub fn write_str<W: io::Write>(w: &mut W, s: &str) -> SmtRes<()> {
+    w.write_all(s.as_bytes())?;
+    Ok(())
+}
 
 #[derive(Clone, Copy)]
 pub struct Parser;
@@ -44,6 +50,7 @@ impl Func {
 }
 
 pub struct Context {
+    init: bool,
     /// rsmt2 Solver
     solver: Solver<Parser>,
     /// lexpr list
@@ -61,6 +68,7 @@ impl Context {
     pub fn new(solver: Solver<Parser>) -> Self
     {
         Context {
+            init: false,
             solver: solver,
             lexpr_list : vec![],
             variables: vec![],
@@ -98,15 +106,14 @@ impl<'a, 'b> ValueParser<String, &'a str> for &'b Parser {
     }
 }
 
-fn dec_to_hex(input: String) -> String{
-    let re = Regex::new(r"\s(?P<num>[0-9]|1[0-5])(\s|\))").unwrap();
+fn replace_variable(input: String, symbol: String, value: String) -> String{
+    let formatted = format!(r"\s({})(\s|\))", symbol);
+    let re = Regex::new(formatted.as_str()).unwrap();
     let mut string = input.to_string();
     let mut new_string= input.to_string().clone();
     let matches : Vec<Match>= re.find_iter(string.as_str()).collect();
     for m in matches.iter().rev(){
-        //println!("{}, {}, {}", m.start(), m.end(), (format!("#x{:x}", &string[m.start()+1..m.end()-1].parse::<i32>().unwrap())));
-        let num_str = format!("#x{:x}", &string[m.start()+1..m.end()-1].parse::<i32>().unwrap());
-        new_string.replace_range(m.start()+1..m.end()-1, &num_str.as_str());
+        new_string.replace_range(m.start()+1..m.end()-1, value.as_str());
     }
     new_string
 }
@@ -165,18 +172,20 @@ fn parse_synth_fun(ctx: &mut Context, sexp: & Value){
     let signatures = sexp_list[2].to_vec().unwrap();
     let return_type = sexp_list[3].to_string();
 
-    let mut func = Func::new();
-    func.symbol = symbol;
-    for sig in signatures{
-        func.params.push((sig.to_vec().unwrap()[0].to_string(), sig.to_vec().unwrap()[1].to_string()));
-    }
-    func.return_type = return_type;
-    for g in &sexp_list[4..]{
-        // TODO: better way to store grammar
-        func.grammar.push(g.clone());
-    }
+    if !ctx.init {
+        let mut func = Func::new();
+        func.symbol = symbol;
+        for sig in signatures {
+            func.params.push((sig.to_vec().unwrap()[0].to_string(), sig.to_vec().unwrap()[1].to_string()));
+        }
+        func.return_type = return_type;
+        for g in &sexp_list[4..] {
+            // TODO: better way to store grammar
+            func.grammar.push(g.clone());
+        }
 
-    ctx.synth_funcs.push(func);
+        ctx.synth_funcs.push(func);
+    }
 
     println!("{}", sexp);
 }
@@ -203,7 +212,9 @@ fn parse_decl_var(ctx: &mut Context, sexp: & Value){
         let var_type = parse_sort(sort).unwrap();
         //println!("{}", var_type);
         ctx.solver.declare_const(symbol.to_string(), sort.to_string()).unwrap();
-        ctx.variables.push((symbol.to_string(), sort.to_string()));
+        if !ctx.init{
+            ctx.variables.push((symbol.to_string(), sort.to_string()));
+        }
 
     } else { println!("wrong type of sexpr in declare-var"); }
 }
@@ -258,7 +269,9 @@ fn parse_constraint(ctx: &mut Context, sexp: & Value, ){
     let mut constraint = &sexp.to_vec().unwrap()[1];
 
     //ctx.solver.assert(constraint.to_string()).unwrap();
-    ctx.constraints.push(constraint.to_string());
+    if !ctx.init {
+        ctx.constraints.push(constraint.to_string());
+    }
 }
 
 fn parse_sexp(ctx: & mut Context, sexp: &Value){
@@ -306,12 +319,27 @@ fn parse_prefix(ctx: &mut Context){
     }
 }
 
-fn parse_define_and_constraint(ctx: &mut Context){
+fn parse_define(ctx: &mut Context){
     for lexpr in ctx.lexpr_list.clone(){
         let vec_sexp = lexpr.to_vec().unwrap();
         match vec_sexp[0].to_string().as_str()
         {
-            "define-fun" | "check-synth" | "constraint" => {
+            "define-fun" | "check-synth" => {
+                parse_sexp(ctx, &lexpr);
+            },
+            _ => {
+
+            }
+        }
+    }
+}
+
+fn parse_constraints(ctx: &mut Context){
+    for lexpr in ctx.lexpr_list.clone(){
+        let vec_sexp = lexpr.to_vec().unwrap();
+        match vec_sexp[0].to_string().as_str()
+        {
+            "constraint" => {
                 parse_sexp(ctx, &lexpr);
             },
             _ => {
@@ -322,16 +350,20 @@ fn parse_define_and_constraint(ctx: &mut Context){
 
     // invert constraints and input assert
     let mut cons_str = "".to_owned();
-    if ctx.constraints.len() > 1 {
+    for con_str in &ctx.constraints[1..]{
         cons_str.push_str("(");
+        cons_str.push_str("or ");
     }
-    for con_str in &ctx.constraints{
+    let mut first = &ctx.constraints[0];
+    cons_str.push_str("(not ");
+    cons_str.push_str(first.as_str());
+    cons_str.push_str(") ");
+
+    for con_str in &ctx.constraints[1..]{
+
         cons_str.push_str("(not ");
         cons_str.push_str(con_str.as_str());
-        cons_str.push_str(")");
-    }
-    if ctx.constraints.len() > 1 {
-        cons_str.push_str(")");
+        cons_str.push_str("))");
     }
     println!("{}", cons_str);
     ctx.solver.assert(cons_str);
@@ -365,6 +397,49 @@ fn parse_file_and_create_ctx(filename: &str) -> Context{
     ctx
 }
 
+fn quick_verify(ctx: &mut Context, list_cex: &Vec<Vec<(String, String, String)>>)->bool{
+    // (symbol, type, value)
+    // use simplify
+
+    if list_cex.len() == 0{
+        return true;
+    }
+
+    // compose other constraints
+    let mut cons_str = "".to_owned();
+    for con_str in &ctx.constraints[1..]{
+        cons_str.push_str("(");
+        cons_str.push_str("and ");
+    }
+    let mut first = &ctx.constraints[0];
+    //cons_str.push_str("");
+    cons_str.push_str(first.as_str());
+    //cons_str.push_str("");
+
+    for con_str in &ctx.constraints[1..]{
+
+        //cons_str.push_str("(");
+        cons_str.push_str(" ");
+        cons_str.push_str(con_str.as_str());
+        //cons_str.push_str("))");
+        cons_str.push_str(") ");
+    }
+    //println!("{}", cons_str);
+
+    for cex in list_cex{
+        let mut input_str = cons_str.clone();
+        for var in cex{
+            input_str = replace_variable(input_str, var.0.to_string(), var.2.to_string());
+        }
+        //println!("{}",input_str);
+        let res = ctx.solver.simplify(input_str, ()).unwrap();
+        if !res{
+            return false;
+        }
+    }
+    true
+}
+
 fn main() {
 
     let paths = fs::read_dir("./benchmarks/lib/General_Track/bv-conditional-inverses/").unwrap();
@@ -372,33 +447,55 @@ fn main() {
     for path in paths {
         let mut ctx = parse_file_and_create_ctx(path.unwrap().path().to_str().unwrap());
         parse_prefix(& mut ctx);
+        let mut list_cex: Vec<Vec<(String, String, String)>> = Vec::new();
+        let mut candidates: Vec<(String, String, String)> = Vec::new(); // TODO: to egg
+        loop {
+            /// TODO: enumerate new solution
+            /// candidates.push(?);
+            for func in &ctx.synth_funcs {
+                ctx.solver.define_fun(func.symbol.clone(), func.params.clone(), func.return_type.clone(), "#xF");
+            }
 
-        // TODO: (define-fun) according to synth-fun before parsing the rest
-        for func in &ctx.synth_funcs {
-            ctx.solver.define_fun(func.symbol.clone(), func.params.clone(), func.return_type.clone(), "#xF");
-        }
+            // parse defined functions
+            parse_define(&mut ctx);
 
-        parse_define_and_constraint(& mut ctx);
-        let result = ctx.solver.check_sat();
-        match result {
-            Ok(res) => {
-                //println!("ok");
+            // TODO: quick verify on counter example set
+            if !quick_verify(&mut ctx, &list_cex){
+                ctx.solver.reset(); // reset needed because our function will be different.
+                continue;
+            }
 
-                let model = ctx.solver.get_model().unwrap();
-                //`Vec<(std::string::String, Vec<(std::string::String, std::string::String)>, std::string::String, std::string::String)>`
-                /// "s", [], "(_ BitVec 4)", "#xd"
-                /// "t", [], "(_ BitVec 4)", "#x5"
-                /// "min", [], "(_ BitVec 4)", "(bvnot (bvlshr (bvnot #x0) #x1))" ??
-                /// "max", [], "(_ BitVec 4)", "(bvnot (bvnot (bvlshr (bvnot #x0) #x1)))" ??
+            // Get counter-example TODO: refactor into a function
+            parse_constraints(&mut ctx);
+            ctx.init = true;
+            let result = ctx.solver.check_sat();
+            let mut cex = Vec::new();
+            match result {
+                Ok(res) => {
+                    //println!("ok");
+                    if !res{
+                        println!("No counter-example");
+                        break;
+                    }
+                    let model = ctx.solver.get_model().unwrap();
+                    //`Vec<(std::string::String, Vec<(std::string::String, std::string::String)>, std::string::String, std::string::String)>`
+                    /// "s", [], "(_ BitVec 4)", "#xd"
+                    /// "t", [], "(_ BitVec 4)", "#x5"
+                    /// "min", [], "(_ BitVec 4)", "(bvnot (bvlshr (bvnot #x0) #x1))" ??
+                    /// "max", [], "(_ BitVec 4)", "(bvnot (bvnot (bvlshr (bvnot #x0) #x1)))" ??
 
-                println!("Counter-example:");
-                let range = ctx.variables.len();
-                for res in &model.to_vec()[..range]{
-                    println!("{} : {} -> {}", res.0, res.2, res.3);
+                    println!("Counter-example:");
+                    let range = ctx.variables.len();
+                    for res in &model.to_vec()[..range] {
+                        cex.push((res.0.to_string(), res.2.to_string(), res.3.to_string()));
+                        println!("{} : {} -> {}", res.0, res.2, res.3);
+                    }
+                    list_cex.push(cex);
+                    ctx.solver.reset();
+                },
+                Err(e) => {
+                    println!("error {}", e);
                 }
-            },
-            Err(e) => {
-                println!("error {}", e);
             }
         }
         println!("End");
