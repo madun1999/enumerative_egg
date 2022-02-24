@@ -1,0 +1,36 @@
+[package]
+name = "lexpr"
+description = "A representation for Lisp data"
+version = "0.2.6"
+authors = ["Andreas Rottmann <mail@r0tty.org>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/rotty/lexpr-rs"
+readme = "README.md"
+documentation = "https://docs.rs/lexpr/"
+keywords = ["lisp", "s-expression", "sexp", "sexpr"]
+categories = ["encoding", "data-structures", "parser-implementations"]
+edition = "2018"
+
+[features]
+default = ["fast-float-parsing"]
+fast-float-parsing = []
+
+[dependencies]
+itoa = "0.4.3"
+ryu = "1.0.0"
+proc-macro-hack = "0.5.4"
+lexpr-macros = { version = "0.2.0", path = "../lexpr-macros" }
+
+[dev-dependencies]
+criterion = "0.3.0"
+quickcheck = "0.9.0"
+quickcheck_macros = "0.9.1"
+rand = "0.7.0"
+
+[[bench]]
+name = "bench"
+harness = false
+
+[badges]
+travis-ci = { repository = "rotty/lexpr-rs" }
+codecov = { repository = "rotty/lexpr-rs", branch = "master", service = "github" }
