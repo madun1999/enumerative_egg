@@ -38,22 +38,33 @@ impl Iterator for GEnumerator {
 
     type Item = Expr;
     fn next(&mut self) -> Option<Expr> {
-        if !self.grammar.started_enumeration {
-            self.grammar.calc_terminals();
-            for (non_term, term) in self.grammar.terminals { // TODO: use non_term
-                let symb_term = SymbolLang::leaf(term.clone());
-                let id = self.bank.add(symb_term.clone()); //TODO: remove clone
-                self.nterm_obs_to_ids.entry(non_term)
-                    .or_insert(Default::default())
-                    .insert(self.grammar.evaluate_all(symb_term, self.pts), id);
+        // if !self.grammar.started_enumeration {
+        //     self.grammar.calc_terminals();
+        //     for (non_term, term) in self.grammar.terminals { // TODO: use non_term
+        //         let sync_term = SymbolLang::leaf(term.clone());
+        //         let id = self.bank.add(sync_term.clone()); //TODO: remove clone
+        //         let obs = self.grammar.evaluate_all(sync_term, self.pts);
+                
+        //         self.nterm_obs_to_ids.entry(non_term)
+        //             .or_insert(Default::default())
+        //             .insert(self.grammar.evaluate_all(sync_term, self.pts), id);
 
-            }
-            self.bank.rebuild();
-        }
-        loop {
-            // TODO: Actually enumerate
-            
-        }
+        //     }
+        //     self.bank.rebuild();
+        
+        // }
+        
+        // Initialize list of new eclasses
+        // For each production Term -> Vec<String> with terminals A1, A2, .., Ak on the rhs
+        //   let a be the NonTerm vector in the rhs (size k)
+        //   let b be the Term -> Vec<Id> BTree
+        //   for <p1, p2, .., pk> in b[A1] x b[A2] x .. x b[An]:
+        //       add rhs[A1 -> p1, .. , Ak -> pk] to the list of new eclasses
+        // Add all new eclasses to bank
+        // rebuild bank
+        // return &bank 
+        // 
+        return None;
     }
 }
 
@@ -131,7 +142,7 @@ impl Grammar {
     pub fn evaluate_all(&self, expr:Expr, pts:Vec<Assignment>) -> Observations {
         let mut obs:Observations = Default::default();
         for pt in pts {
-            obs.insert(pt, self.evaluate(expr, pt));
+            // obs.insert(pt, self.evaluate(expr, pt));
         }
         obs
     }

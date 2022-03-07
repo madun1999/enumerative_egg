@@ -65,35 +65,3 @@
 
 
 
-// define_language! {
-//     enum BVLanguage {
-//         // string variant with no children
-//         "pi" = Pi,
-
-//         // string variants with an array of child `Id`s (any static size)
-//         // any type that implements LanguageChildren may be used here
-//         "+" = Add([Id; 2]),
-//         "-" = Sub([Id; 2]),
-//         "*" = Mul([Id; 2]),
-
-//         // can also do a variable number of children in a boxed slice
-//         // this will only match if the lengths are the same
-//         "list" = List(Box<[Id]>),
-
-//         // string variants with a single child `Id`
-//         // note that this is distinct from `Sub`, even though it has the same
-//         // string, because it has a different number of children
-//         "-"  = Neg(Id),
-
-//         // data variants with a single field
-//         // this field must implement `FromStr` and `Display`
-//         Num(i32),
-//         // language items are parsed in order, and we want symbol to
-//         // be a fallback, so we put it last
-//         Symbol(Symbol),
-//         // This is the ultimate fallback, it will parse any operator (as a string)
-//         // and any number of children.
-//         // Note that if there were 0 children, the previous branch would have succeeded
-//         Other(Symbol, Vec<Id>),
-//     }
-// }
