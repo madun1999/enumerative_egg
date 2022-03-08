@@ -6,8 +6,10 @@ use egg::define_language;
 use egg::Id;
 use egg::Symbol;
 
+use crate::observation_folding_bv::ObsId;
+
 define_language! {
-    enum BVLanguage {
+    pub enum BVLanguage {
         // string variant with no children
         
 
@@ -15,7 +17,7 @@ define_language! {
         // this field must implement `FromStr` and `Display`
         Bool(bool),
         BV(BVLiteral),
-
+        Obs(ObsId),
 
         // string variants with an array of child `Id`s (any static size)
         // any type that implements LanguageChildren may be used here
@@ -64,7 +66,14 @@ define_language! {
         // and any number of children.
         // Note that if there were 0 children, the previous branch would have succeeded
         Other(Symbol, Vec<Id>),
+        
     }
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
+pub enum BVValue {
+    BV(BVLiteral),
+    Bool(bool)
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Default)]

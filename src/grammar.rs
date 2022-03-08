@@ -7,12 +7,12 @@ use egg::EGraph;
 
 type Expr = SymbolLang;
 type NonTerminals = String;
-type Observations = BTreeMap<Assignment, Value>;
+pub type Observations<V> = BTreeMap<Assignment<V>, V>;
 type Terminals = String;
 type Prod = Vec<String>;
 type Prods = Vec<Prod>;
 type Value = ();
-type Assignment = BTreeMap<Terminals, Value>;
+type Assignment<V> = BTreeMap<Terminals, V>;
 
 
 
@@ -26,15 +26,15 @@ pub struct Grammar {
     non_terminals: HashSet<NonTerminals>, 
     start: String
 }
-pub struct GEnumerator {
-    term_val_to_id: BTreeMap<Terminals, BTreeMap<Observations, Id>>,
-    pts: Vec<Assignment>,
+pub struct GEnumerator<V> {
+    term_val_to_id: BTreeMap<Terminals, BTreeMap<Observations<V>, Id>>,
+    pts: Vec<Assignment<V>>,
     grammar: Grammar,
     bank: EGraph<SymbolLang, ()>,
-    nterm_obs_to_ids: BTreeMap<NonTerminals,BTreeMap<Observations, Id>>,
+    nterm_obs_to_ids: BTreeMap<NonTerminals,BTreeMap<Observations<V>, Id>>,
 }
 
-impl Iterator for GEnumerator {
+impl <V> Iterator for GEnumerator<V> {
 
     type Item = Expr;
     fn next(&mut self) -> Option<Expr> {
@@ -68,8 +68,8 @@ impl Iterator for GEnumerator {
     }
 }
 
-impl GEnumerator {
-    pub fn new(grammar: Grammar) -> GEnumerator {
+impl <V> GEnumerator<V> {
+    pub fn new(grammar: Grammar) -> GEnumerator<V> {
         GEnumerator { 
             bank: Default::default(),
             term_val_to_id: Default::default(),
@@ -78,7 +78,7 @@ impl GEnumerator {
             nterm_obs_to_ids: Default::default(),
         } 
     }
-    pub fn add_pts(&mut self, a: Assignment) { // TODO: reset Genumerator
+    pub fn add_pts(&mut self, a: Assignment<V>) { // TODO: reset Genumerator
         self.pts.push(a);
     }
 }
@@ -131,21 +131,21 @@ impl Grammar {
         }
     }
 
-    pub fn iter(&self) -> GEnumerator {
-        GEnumerator::new(self.clone())
-    }
+    // pub fn iter(&self) -> GEnumerator<V>{
+    //     GEnumerator::new(self.clone())
+    // }
 
-    pub fn evaluate(&self, expr:Expr, pt:Assignment) -> Value {
-        return () 
-    }
+    // pub fn evaluate(&self, expr:Expr, pt:Assignment<V>) -> Value {
+    //     return () 
+    // }
 
-    pub fn evaluate_all(&self, expr:Expr, pts:Vec<Assignment>) -> Observations {
-        let mut obs:Observations = Default::default();
-        for pt in pts {
-            // obs.insert(pt, self.evaluate(expr, pt));
-        }
-        obs
-    }
+    // pub fn evaluate_all(&self, expr:Expr, pts:Vec<Assignment<V>>) -> Observations<V> {
+    //     let mut obs:Observations = Default::default();
+    //     for pt in pts {
+    //         // obs.insert(pt, self.evaluate(expr, pt));
+    //     }
+    //     obs
+    // }
     
 }
 
