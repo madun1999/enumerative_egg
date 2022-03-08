@@ -7,6 +7,7 @@ use egg::DidMerge;
 use egg::Id;
 use egg::Language;
 
+use crate::grammar::Observations;
 use crate::language_bv::BVLanguage;
 use crate::language_bv::BVLiteral;
 use crate::language_bv::BVValue;
@@ -18,8 +19,7 @@ use crate::language_bv::BVValue;
 // }
 
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Default)]
-pub struct Observations<V>(Vec<V>);
+
 type Terminals = String;
 
 type Assignment<V> = BTreeMap<Terminals, V>;
@@ -57,7 +57,8 @@ impl FromStr for ObsId {
     }
 }
 
-struct ConstantFoldBV {
+#[derive(Debug,Default)]
+pub struct ConstantFoldBV {
     assignments: Vec<Assignment<BVValue>>,
     obs_id: BTreeMap<Observations<BVValue>, ObsId>,
     id_obs: BTreeMap<ObsId, Observations<BVValue>>,
