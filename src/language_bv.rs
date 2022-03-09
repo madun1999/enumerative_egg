@@ -98,7 +98,7 @@ fn nat2bv(size: usize, num: u32) -> Result<BVLiteral, String>{
         Err(format!("Wrong size: {}", size))
     }else{
         let mut ret_val = BVLiteral{ length: size, value: vec![false; size] };
-        ret_val.value.iter().zip(0..size).map(|(x, i)| (num & (1 << i)) != 0);
+        ret_val.value = ret_val.value.iter().zip(0..size).map(|(x, i)| (num & (1 << i)) != 0).collect();
         Ok(ret_val)
     }
 }
@@ -168,6 +168,15 @@ pub fn test_bvliteral() {
     assert_eq!(format!("{}", a), "#b110110");
     assert_eq!(format!("{}", b), "#b01000101");
     assert!(BVLiteral::from_str("#xg45").is_err());
+    let left = BVLiteral::from_str("#x10").unwrap();
+    let right = BVLiteral::from_str("#x03").unwrap();
+    println!("{}", left);
+    println!("{}", right);
+    println!("bvadd: {}", bvadd(&left, &right).unwrap());
+    println!("bvudiv: {}", bvudiv(&left, &right).unwrap());
+    println!("bvurem: {}", bvurem(&left, &right).unwrap());
+    println!("bvshl: {}", bvshl(&left, &right).unwrap());
+    println!("bvult: {}", bvult(&left, &right).unwrap());
 }
 
 
