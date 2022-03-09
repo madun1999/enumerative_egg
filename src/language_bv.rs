@@ -83,6 +83,34 @@ pub struct BVLiteral
     value: Vec<bool>,
 }
 
+// trait Nat2Bv : Sized {
+//     type Err;
+//     fn nat2bv(size: usize, num: &u32) -> Result<Self, Self::Err>;
+// }
+//
+// trait Bv2nat : Sized {
+//     type Err;
+//     fn bv2nat(bv: &BVLiteral) -> Result<Self, Self::Err>;
+// }
+
+fn nat2bv(size: usize, num: u32) -> Result<BVLiteral, String>{
+    if size > 32{
+        Err(format!("Wrong size: {}", size))
+    }else{
+        let mut ret_val = BVLiteral{ length: size, value: vec![false; size] };
+        ret_val.value.iter().zip(0..size).map(|(x, i)| (num & (1 << i)) != 0);
+        Ok(ret_val)
+    }
+}
+
+fn bv2nat(bv: &BVLiteral) -> Result<u32, String> {
+    if bv.length > 32{
+        Err(format!("Bitvector too long: {}", bv.length ))
+    }else{
+        Ok(bv.value.iter().rev().fold(0, |acc, b| ((acc << 1) | *b as u32)))
+    }
+}
+
 impl FromStr for BVLiteral {
     type Err = String;
 
@@ -186,70 +214,90 @@ pub fn bvconcat(upper: &BVLiteral, lower: &BVLiteral) -> Option<BVLiteral>{
 pub fn bvextract(i:usize, j:usize, this: &BVLiteral) -> Option<BVLiteral>{
 
     Some(BVLiteral{
-        length: 0,
-        value: vec![],
+        length: i - j + 1,
+        value: this.value[i..j].to_vec(),
     })
 } 
 
 pub fn bvneg(this: &BVLiteral) -> Option<BVLiteral>{
-
-    Some(BVLiteral{
-        length: 0,
-        value: vec![],
-    })
+    if this.length > 32{
+        None
+    }else {
+        Some(nat2bv(this.length, (2 << (this.length - 1)) - bv2nat(this).ok()?).ok()?)
+    }
 } 
 
 pub fn bvadd(this: &BVLiteral, that: &BVLiteral) -> Option<BVLiteral>{
-
-    Some(BVLiteral{
-        length: 0,
-        value: vec![],
-    })
+    if this.length != that.length || this.length > 32{
+        None
+    }else {
+        let ret_val = bv2nat(this).ok()?.checked_add(bv2nat(that).ok()?)?;
+        Some(nat2bv(this.length, ret_val).ok()?)
+    }
 } 
 
 pub fn bvmul(this: &BVLiteral, that: &BVLiteral) -> Option<BVLiteral>{
-
-    Some(BVLiteral{
-        length: 0,
-        value: vec![],
-    })
+    if this.length != that.length || this.length > 32{
+        None
+    }else {
+        let ret_val = bv2nat(this).ok()?.checked_mul(bv2nat(that).ok()?)?;
+        Some(nat2bv(this.length, ret_val).ok()?)
+    }
 } 
 
 pub fn bvudiv(this: &BVLiteral, that: &BVLiteral) -> Option<BVLiteral>{
-
-    Some(BVLiteral{
-        length: 0,
-        value: vec![],
-    })
+    if this.length != that.length || this.length > 32{
+        None
+    }else{
+        let ret_val = bv2nat(this).ok()?.checked_div(bv2nat(that).ok()?);
+        match ret_val{
+            Some(val) => Some(nat2bv(this.length, val).ok()?),
+            None => Some(BVLiteral{
+                length: this.length,
+                value: vec![true; this.length]
+            })
+        }
+    }
 } 
 
 pub fn bvurem(this: &BVLiteral, that: &BVLiteral) -> Option<BVLiteral>{
-
-    Some(BVLiteral{
-        length: 0,
-        value: vec![],
-    })
+    if this.length != that.length || this.length > 32{
+        None
+    }else{
+        let ret_val = bv2nat(this).ok()?.checked_rem(bv2nat(that).ok()?);
+        match ret_val{
+            Some(val) => Some(nat2bv(this.length, val).ok()?),
+            None => Some(this.clone())
+        }
+    }
 } 
 
 pub fn bvshl(this: &BVLiteral, that: &BVLiteral) -> Option<BVLiteral>{
 
-    Some(BVLiteral{
-        length: 0,
-        value: vec![],
-    })
+    if this.length != that.length || this.length > 32{
+        None
+    }else{
+        let ret_val = bv2nat(this).ok()? << (bv2nat(that).ok()?);
+        Some(nat2bv(this.length, ret_val).ok()?)
+    }
 } 
 
 pub fn bvlshr(this: &BVLiteral, that: &BVLiteral) -> Option<BVLiteral>{
 
-    Some(BVLiteral{
-        length: 0,
-        value: vec![],
-    })
+    if this.length != that.length || this.length > 32{
+        None
+    }else{
+        let ret_val = bv2nat(this).ok()? >> (bv2nat(that).ok()?);
+        Some(nat2bv(this.length, ret_val).ok()?)
+    }
 } 
 
 
 pub fn bvult(this: &BVLiteral, that: &BVLiteral) -> Option<bool>{
-
-    Some(true)
+    if this.length != that.length || this.length > 32{
+        None
+    }else{
+        Some(bv2nat(this).ok()? < (bv2nat(that).ok()?))
+    }
 } 
 
