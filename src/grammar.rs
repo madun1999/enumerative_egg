@@ -9,6 +9,7 @@ use egg::EGraph;
 use itertools::Itertools;
 use crate::language_bv::BVLanguage;
 use crate::language_bv::BVValue;
+use crate::language_bv::BV_OPS;
 use crate::observation_folding_bv::ConstantFoldBV;
 
 
@@ -111,15 +112,18 @@ impl GEnumerator {
             self.grammar.calc_terminals();
             for (non_terminal, terminals) in &self.grammar.terminals { // TODO: use non_term
                 for terminal in terminals {
-                    let sync_term= BVLanguage::from_op(&terminal.0, vec![]);
-                    match sync_term {
-                        Ok(a) => {
-                            let id = self.bank.add(a);
-                        }
-                        Err(e) => {
-                            println!("{:?}", e)
+                    if !BV_OPS.contains(terminal.0) {
+                        let sync_term= BVLanguage::from_op(&terminal.0, vec![]);
+                        match sync_term {
+                            Ok(a) => {
+                                self.bank.add(a);
+                            }
+                            Err(e) => {
+                                println!("{:?}", e)
+                            }
                         }
                     }
+                   
                 }
             }
             self.bank.rebuild();
@@ -231,3 +235,6 @@ impl Grammar {
     
 }
 
+fn test_grammar() {
+    
+}

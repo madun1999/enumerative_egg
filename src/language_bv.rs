@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 use std::fmt::Display;
 use std::str::FromStr;
+use std::vec;
 
 use egg::define_language;
 use egg::Id;
@@ -8,6 +9,28 @@ use egg::Symbol;
 
 use crate::observation_folding_bv::ObsId;
 
+pub const BV_OPS : [str] = [
+    "not",
+    "and",
+    "or",
+    "xor",
+    "=>",
+    "=",
+    "ite",
+
+    "concat",
+    "bvnot",
+    "bvneg",
+    "bvand",
+    "bvor",
+    "bvmul",
+    "bvadd",
+    "bvudiv",
+    "bvurem",
+    "bvshl",
+    "bvshr",
+    "bvult",
+];
 
 define_language! {
     pub enum BVLanguage {
