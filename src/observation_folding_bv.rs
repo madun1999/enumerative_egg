@@ -8,6 +8,7 @@ use egg::Id;
 use egg::Language;
 
 use crate::grammar::Observations;
+use crate::language_bv;
 use crate::language_bv::BVLanguage;
 use crate::language_bv::BVLiteral;
 use crate::language_bv::BVValue;
@@ -32,7 +33,7 @@ impl<V: Display> Display for Observations<V> {
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy, Default)]
-pub struct ObsId (i32);
+pub struct ObsId (usize);
 
 impl Display for ObsId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -48,7 +49,7 @@ impl FromStr for ObsId {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s.chars().next().unwrap() == '$' {
-            if let Ok(a) = s[1..].parse::<i32>(){
+            if let Ok(a) = s[1..].parse::<usize>(){
                 return Ok(ObsId(a));
             }
         }
@@ -62,11 +63,11 @@ pub struct ConstantFoldBV {
     assignments: Vec<Assignment<BVValue>>,
     obs_id: BTreeMap<Observations<BVValue>, ObsId>,
     id_obs: BTreeMap<ObsId, Observations<BVValue>>,
-    id_next: i32,
+    id_next: usize,
 }
 
 impl ConstantFoldBV {
-    fn get_id(&mut self) -> i32{
+    fn get_id(&mut self) -> usize{
         let a = self.id_next;
         self.id_next += 1;
         return a;
@@ -95,9 +96,36 @@ impl Analysis<BVLanguage> for ConstantFoldBV {
     fn make(egraph: &egg::EGraph<BVLanguage, Self>, enode: &BVLanguage) -> Self::Data {
         let x = |i: &Id| &egraph[*i].data;
         let assignments = &egraph.analysis.assignments;
+        let analysis = &egraph.analysis;
         let new_obs = match enode {
             BVLanguage::Bool(c) => Observations(vec![BVValue::Bool(*c); assignments.len()]),
             BVLanguage::BV(lit) => Observations(vec![BVValue::BV(lit.clone()); assignments.len()]),
+            BVLanguage::Var(var) => {
+                Observations(assignments.iter().map(|assignment| {
+                    assignment.get(&var.to_string()).unwrap().clone()
+                }).collect())
+            },
+            BVLanguage::Obs(i) => analysis.find_obs_from_id(*i).unwrap().clone(),
+            BVLanguage::BVNot([a]) => {
+                let k = x(a).iter().map(|val| {
+                    if let BVValue::BV(bv) = val {
+                        BVValue::BV(language_bv::bvnot(bv).unwrap())
+                    } else {
+                        panic!("{:?} not a BV", val);
+                    }
+                }).collect();
+                Observations(k)
+            },
+            BVLanguage::BVAnd([a,b]) => {
+                let k = x(a).iter().zip(x(b).iter()).map(|val| {
+                    if let (BVValue::BV(bva), BVValue::BV(bvb)) = val {
+                        BVValue::BV(language_bv::bvand(bva, bvb).unwrap())
+                    } else {
+                        panic!("{:?} not two BVs", val);
+                    }
+                }).collect();
+                Observations(k)
+            },
             _ => todo!(),
         };
         println!("Make: {:?} -> {:?}", enode, new_obs);

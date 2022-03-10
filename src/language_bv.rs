@@ -9,7 +9,7 @@ use egg::Symbol;
 
 use crate::observation_folding_bv::ObsId;
 
-pub const BV_OPS : [str] = [
+pub const BV_OPS : [&'static str; 19] = [
     "not",
     "and",
     "or",

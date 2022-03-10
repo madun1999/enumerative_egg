@@ -1,6 +1,7 @@
 
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
+use std::ops::Deref;
 use std::vec;
 use egg::FromOp;
 use egg::Id;
@@ -86,6 +87,13 @@ pub struct Production {
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Default)]
 pub struct Observations<V>(pub Vec<V>);
 
+impl<V> Deref for Observations<V> {
+    type Target = Vec<V>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+} 
 
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Default)]
@@ -112,7 +120,7 @@ impl GEnumerator {
             self.grammar.calc_terminals();
             for (non_terminal, terminals) in &self.grammar.terminals { // TODO: use non_term
                 for terminal in terminals {
-                    if !BV_OPS.contains(terminal.0) {
+                    if !BV_OPS.contains(&terminal.0.as_str()) {
                         let sync_term= BVLanguage::from_op(&terminal.0, vec![]);
                         match sync_term {
                             Ok(a) => {
@@ -145,10 +153,14 @@ impl GEnumerator {
                 new_enodes.push(rhs.instantiate(substance, &mut self.bank));
             }
         }    
+
         
-            // Add all new enodes to bank
-            // rebuild bank
-            self.bank.rebuild();
+        // Add all new enodes to bank
+        for enode in new_enodes {
+            self.bank.add(enode);
+        }
+        // rebuild bank
+        self.bank.rebuild();
 
         // return &bank     
         return &self.bank;
