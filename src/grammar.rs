@@ -26,11 +26,11 @@ struct NonTerminal(String);
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
 pub enum Term {
     Terminal(Terminal),
-    NonTerminal(NonTerminal)
+    NonTerminal(NonTerminal),
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Default)]
-pub struct RHS(Vec<Term>); // assuming RHS is a flat rule, first one is nonterminal
+pub struct RHS(Vec<Term>); // assuming RHS is a flat rule, at most one terminal in front
 impl RHS { 
     fn get_non_terms(&self) -> Vec<NonTerminal>{
         // return vector of nonterminals in order
@@ -56,21 +56,27 @@ impl RHS {
         res
     }
 
-    fn sub_terminals(&self, substance: Vec<&Id>, term_id: BTreeMap<Terminal, Id>) -> BVLanguage {
+    fn instantiate(&self, substance: Vec<&Id>, bank:&mut EGraph<BVLanguage, ConstantFoldBV>) -> BVLanguage {
+        // Given rule, terms to be substituted, and 
+        // substance is the terms to be inserted, term_id is a dictionary of terminal -> id 
         let mut i = 0;
-
-        let children = self.0.iter().skip(1).map(|x| 
+        let mut skipping = 0;
+        match self.0.get(0).unwrap() {
+            Term::NonTerminal(a) => {skipping = 0;}
+            Term::Terminal(a) => {skipping = 1;}
+        }
+        let children = self.0.iter().skip(skipping).map(|x| 
             match x {
-                Term::NonTerminal(_) => {
+                Term::NonTerminal(a) => {
                     i+=1;
                     (*substance.get(i-1).unwrap()).clone()
                 }
-                Term::Terminal(a) => term_id.get(a).unwrap().clone()
+                Term::Terminal(a) => bank.add(BVLanguage::from_op(&a.0, vec![]).unwrap())
             }
         ).collect();
         let val = match self.0.get(0).unwrap() {
+            Term::Terminal(x) => &x.0,
             Term::NonTerminal(x) => &x.0,
-            Term::Terminal(a) => "tt",
         };
         BVLanguage::from_op(val, children).unwrap()
     }
@@ -100,7 +106,6 @@ pub struct GEnumerator{ // TODO: Make it generic <L: From Op,V:Something> , BV f
     true_obs: Vec<Observations<BVValue>>,
     grammar: Grammar,
     bank: EGraph<BVLanguage, ConstantFoldBV>,
-    terminal_id: BTreeMap<Terminal, Id>
 }
 
 impl GEnumerator {
@@ -138,7 +143,7 @@ impl GEnumerator {
             for substance in non_terms.iter().map(|x| term_to_ids.get(x).unwrap()).multi_cartesian_product() {
                 //   for <p1, p2, .., pk> in b[A1] x b[A2] x .. x b[An]:
                 //       add rhs[A1 -> p1, .. , Ak -> pk] to the list of new enodes
-                new_enodes.push(rhs.sub_terminals(substance, self.non_term_id));
+                new_enodes.push(rhs.instantiate(substance, &mut self.bank));
             }
         }    
         

@@ -8,6 +8,7 @@ use egg::Symbol;
 
 use crate::observation_folding_bv::ObsId;
 
+
 define_language! {
     pub enum BVLanguage {
         // string variant with no children
@@ -44,7 +45,6 @@ define_language! {
         "bvshl" = BVShl([Id; 2]),
         "bvshr" = BVShr([Id; 2]),
         "bvult" = BVUlt([Id; 2]),
-        //TODO: need bvextract ((_ extract i j) s)
 
 
 
@@ -61,7 +61,7 @@ define_language! {
         
         // language items are parsed in order, and we want symbol to
         // be a fallback, so we put it last
-        Symbol(Symbol),
+        Var(Symbol),
         // This is the ultimate fallback, it will parse any operator (as a string)
         // and any number of children.
         // Note that if there were 0 children, the previous branch would have succeeded
