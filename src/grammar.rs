@@ -1,22 +1,17 @@
 
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
-use std::collections::HashSet;
 use std::vec;
 use egg::FromOp;
 use egg::Id;
-use egg::Language;
-use egg::SymbolLang;
+
 use egg::EGraph;
 use itertools::Itertools;
 use crate::language_bv::BVLanguage;
 use crate::language_bv::BVValue;
 use crate::observation_folding_bv::ConstantFoldBV;
 
-type Expr = SymbolLang;
 
-type Prod = Vec<String>;
-type Prods = Vec<Prod>;
 type Assignment<V> = BTreeMap<Terminal, V>;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Default)]
