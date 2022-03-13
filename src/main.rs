@@ -474,8 +474,8 @@ fn quick_verify(ctx: &mut Context, list_cex: &Vec<Vec<(String, String, String)>>
 // }
 
 fn main() {
-    // run();
-    language_bv::test_bvliteral();
+    run();
+    //language_bv::test_bvliteral();
 }
 
 fn run() {
@@ -490,7 +490,10 @@ fn run() {
         loop {
             /// TODO: enumerate new solution
             /// candidates.push(?);
+
             for func in &ctx.synth_funcs {
+                // Test parsing grammar
+                // grammar::test_grammar(&func.grammar);
                 ctx.solver.define_fun(func.symbol.clone(), func.params.clone(), func.return_type.clone(), "#xF");
             }
 

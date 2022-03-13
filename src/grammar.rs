@@ -13,6 +13,9 @@ use crate::language_bv::BVValue;
 use crate::language_bv::BV_OPS;
 use crate::observation_folding_bv::ConstantFoldBV;
 
+use lexpr;
+use lexpr::parse::{KeywordSyntax, Options, Read, SliceRead};
+use lexpr::Value;
 
 type Assignment<V> = BTreeMap<Terminal, V>;
 
@@ -191,7 +194,59 @@ impl Grammar {
             non_terminals: Default::default(),
             start: Terminal(start),
         } 
-    } 
+    }
+
+    pub fn new_from_sexpr(sexpr: &Vec<Value>) -> Grammar {
+
+        //println!("Test parsing grammar: {}", sexpr[0]); // non-terminals
+        //println!("Test parsing grammar: {}", sexpr[1]); // rules
+
+        let mut grammar = Grammar {
+            productions: Default::default(),
+            started_enumeration: false,
+            terminals: Default::default(),
+            non_terminals: Default::default(),
+            start: Terminal("".to_string()), // ?
+        };
+
+        //for val in sexpr[0]{ // parse non-terminal
+            // val[0]: name
+            // val[1]: sort
+        //}
+
+        for rule in sexpr[1].to_vec().unwrap(){ // parse rule
+            let list = rule.to_vec().unwrap();
+            // rule[0]: non-terminal name
+            // rule[1]: non-terminal sort
+            // rule[2]:
+            //println!("Test parsing grammar: {}", list[0]);
+            //println!("Test parsing grammar: {}", list[2]);
+            let non_term = NonTerminal(list[0].to_string());
+            let mut production = Production{ lhs: non_term.clone(), rhs: RHS(vec![])};
+            grammar.non_terminals.insert(non_term.clone());
+            grammar.terminals.insert(non_term.clone(), vec![]);
+
+            for val in list[2].to_vec().unwrap(){
+                //println!("Test parsing grammar: {}", val);
+                match val{
+                    Value::Number(_) | Value::Bool(_) | Value::Symbol(_) =>{
+                        grammar.terminals.get_mut(&non_term).unwrap().push(Terminal(val.to_string()));
+                        production.rhs.0.push(Term::Terminal(Terminal(val.to_string())));
+                    },
+                    Value::Cons(_) => {
+                        // Nothing
+                        production.rhs.0.push(Term::NonTerminal(NonTerminal(val.to_string())));
+                    }
+                    _ => {
+                        println!("Shouldn't happens: {} in grammar parsing", val);
+                    }
+                }
+            }
+            grammar.productions.push(production);
+        }
+
+        grammar
+    }
 
     pub fn add_rule(&mut self, non_term: NonTerminal, prod: Vec<Term>) {
         if self.started_enumeration {
@@ -247,6 +302,8 @@ impl Grammar {
     
 }
 
-fn test_grammar() {
-    
+pub fn test_grammar(sexpr: &Vec<Value>) {
+    //let grammar = Grammar::new();
+    let grammar = Grammar::new_from_sexpr(sexpr);
+    //println!("wait");
 }
