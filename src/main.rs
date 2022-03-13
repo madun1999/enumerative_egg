@@ -17,6 +17,10 @@ use rsmt2::prelude::{Expr2Smt, Sym2Smt};
 use smt2parser::concrete::{parse_simple_attribute_value};
 use smt2parser::concrete::Sort::Simple;
 
+mod grammar;
+mod language_bv;
+mod observation_folding_bv;
+
 pub fn write_str<W: io::Write>(w: &mut W, s: &str) -> SmtRes<()> {
     w.write_all(s.as_bytes())?;
     Ok(())
@@ -440,7 +444,41 @@ fn quick_verify(ctx: &mut Context, list_cex: &Vec<Vec<(String, String, String)>>
     true
 }
 
+// pub struct Context {
+//     init: bool,
+//     /// rsmt2 Solver
+//     solver: Solver<Parser>,
+//     /// lexpr list
+//     lexpr_list : Vec<Value>,
+//     /// variable list
+//     variables : Vec<Param>,
+//     /// constraint list
+//     constraints: Vec<String>,
+//     /// function list
+//     synth_funcs: Vec<Func>
+// }
+
+// impl Context {
+//     /// Constructs a new cons cell from two values.
+//     pub fn new(solver: Solver<Parser>) -> Self
+//     {
+//         Context {
+//             init: false,
+//             solver: solver,
+//             lexpr_list : vec![],
+//             variables: vec![],
+//             constraints: vec![],
+//             synth_funcs: vec![]
+//         }
+//     }
+// }
+
 fn main() {
+    // run();
+    language_bv::test_bvliteral();
+}
+
+fn run() {
 
     let paths = fs::read_dir("./benchmarks/lib/General_Track/bv-conditional-inverses/").unwrap();
 
@@ -508,28 +546,4 @@ fn main() {
 
 }
 
-fn test_z3(){
-    // let cfg = Config::new();
-    // let ctx = Context::new(&cfg);
-    //
-    // let x = Real::new_const(&ctx,"x");
-    // let y = Real::new_const(&ctx,"y");
-    // let two = Real::from_real(&ctx,2, 1);
-    // let ten = Real::from_real(&ctx,10, 1);
-    // let seven = Real::from_real(&ctx,7, 1);
-    //
-    // let sol = Solver::new(&ctx); //x > 2, y < 10, x + 2 * y == 7
-    //
-    // sol.assert(&x.gt(&two));
-    // sol.assert(&y.lt(&ten));
-    // sol.assert(&y.gt(&Real::from_real(&ctx,0, 1)));
-    // let two_times_y = Real::mul(&ctx, &[&two, &y]);
-    // let x_plus_above = Real::add(&ctx, &[&x, &two_times_y]);
-    // sol.assert(&x_plus_above._eq(&seven));
-    //
-    // assert_eq!(sol.check(), SatResult::Sat);
-    //
-    // println!("{}", sol.get_model().unwrap());
-    //
-    // println!("Hello, world!");
-}
+

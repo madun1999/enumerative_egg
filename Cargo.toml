@@ -17,3 +17,4 @@ path = "./parser" # Make the parser local because I modified how it treat hex nu
 
 [dependencies.rsmt2]
 path = "./rsmt2" # Make the rsmt2 local because I added simplify for quick_verify
+itertools= "0.10.2"
