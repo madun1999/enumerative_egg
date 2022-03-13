@@ -211,6 +211,7 @@ name = "enumerative_egg"
 version = "0.1.0"
 dependencies = [
  "egg",
+ "itertools",
  "lexpr",
  "regex",
  "rsmt2",
