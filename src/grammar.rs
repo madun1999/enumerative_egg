@@ -3,6 +3,7 @@ use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 use std::ops::Deref;
 use std::vec;
+use egg::EClass;
 use egg::FromOp;
 use egg::Id;
 
@@ -117,7 +118,7 @@ pub struct GEnumerator{ // TODO: Make it generic <L: From Op,V:Something> , BV f
 
 impl GEnumerator {
 
-    fn next(&mut self) -> &EGraph<BVLanguage, ConstantFoldBV> {
+    fn one_iter(&mut self) -> &EGraph<BVLanguage, ConstantFoldBV> {
         // If not started, put all terminals in the bank
         if !self.grammar.started_enumeration {
             self.grammar.calc_terminals();
@@ -149,7 +150,7 @@ impl GEnumerator {
             let k = non_terms.len();
             let mut term_to_ids :BTreeMap<NonTerminal, Vec<Id>> = Default::default();
             term_to_ids.insert(NonTerminal("Start".to_string()), self.bank.classes().map(|x| x.id).collect());
-            
+            // let a  = non_terms.iter().map(|x| term_to_ids.get(x).unwrap()).multi_cartesian_product();
             for substance in non_terms.iter().map(|x| term_to_ids.get(x).unwrap()).multi_cartesian_product() {
                 //   for <p1, p2, .., pk> in b[A1] x b[A2] x .. x b[An]:
                 //       add rhs[A1 -> p1, .. , Ak -> pk] to the list of new enodes
@@ -183,6 +184,13 @@ impl GEnumerator{
         self.pts.push(a);
     }
 }
+pub trait HasOpString {
+    fn get_op_string(&self) -> String;
+}
+
+
+
+
 
 
 impl Grammar {

@@ -1,3 +1,6 @@
 [submodule "benchmarks"]
 	path = benchmarks
 	url = https://github.com/SyGuS-Org/benchmarks.git
+[submodule "egg"]
+	path = egg
+	url = git@github.com:egraphs-good/egg.git

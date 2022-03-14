@@ -58,7 +58,7 @@ impl FromStr for ObsId {
     }
 }
 
-#[derive(Debug,Default)]
+#[derive(Debug,Default, Clone)]
 pub struct ConstantFoldBV {
     assignments: Vec<Assignment<BVValue>>,
     obs_id: BTreeMap<Observations<BVValue>, ObsId>,
@@ -86,6 +86,15 @@ impl ConstantFoldBV {
 
     fn find_obs_from_id(&self, a: ObsId) -> Option<&Observations<BVValue>>{
         self.id_obs.get(&a)
+    }
+
+    pub fn new(assignments: Vec<Assignment<BVValue>>) -> Self {
+        ConstantFoldBV {
+            assignments,
+            obs_id: Default::default(),
+            id_obs: Default::default(),
+            id_next: 0
+        }
     }
 }
 

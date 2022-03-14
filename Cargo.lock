@@ -186,8 +186,6 @@ checksum = "245097e9a4535ee1e3e3931fcfcd55a796a44c643e8596ff6566d68f09b87bbc"
 [[package]]
 name = "egg"
 version = "0.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a9f1058c150e258252353a8f8e6d41036ced7d266390114d121abf2ace6e1b6b"
 dependencies = [
  "fxhash",
  "hashbrown",
@@ -216,6 +214,7 @@ dependencies = [
  "regex",
  "rsmt2",
  "smt2parser",
+ "symbolic_expressions",
  "z3",
 ]
 
