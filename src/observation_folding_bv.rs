@@ -60,9 +60,9 @@ impl FromStr for ObsId {
 
 #[derive(Debug,Default, Clone)]
 pub struct ConstantFoldBV {
-    assignments: Vec<Assignment<BVValue>>,
+    pub assignments: Vec<Assignment<BVValue>>,
     obs_id: BTreeMap<Observations<BVValue>, ObsId>,
-    id_obs: BTreeMap<ObsId, Observations<BVValue>>,
+    pub id_obs: BTreeMap<ObsId, Observations<BVValue>>,
     id_next: usize,
 }
 

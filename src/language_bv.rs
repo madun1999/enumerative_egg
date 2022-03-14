@@ -432,7 +432,7 @@ impl<'a, 'b> ToSexp<'a, 'b> for BVLanguage {
                 // }
             },
             BVLanguage::BVAnd([a,b]) => {
-                println!("{:?} {:?} {:?}", a, b, forbid);
+                // println!("{:?} {:?} {:?}", a, b, forbid);
                 // if forbid.contains(b) || forbid.contains(a) {vec![]} else {
                     iproduct!(get_class(a).sexp_vect(egraph, forbid).iter(),get_class(b).sexp_vect(egraph, forbid).iter()).map(
                         |(a, b)|{
