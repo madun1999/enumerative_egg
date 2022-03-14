@@ -106,6 +106,16 @@ impl Analysis<BVLanguage> for ConstantFoldBV {
                 }).collect())
             },
             BVLanguage::Obs(i) => analysis.find_obs_from_id(*i).unwrap().clone(),
+            BVLanguage::BVConcat([a,b]) => {
+                let k = x(a).iter().zip(x(b).iter()).map(|val| {
+                    if let (BVValue::BV(bva), BVValue::BV(bvb)) = val {
+                        BVValue::BV(language_bv::bvconcat(bva, bvb).unwrap())
+                    } else {
+                        panic!("{:?} not two BVs", val);
+                    }
+                }).collect();
+                Observations(k)
+            },
             BVLanguage::BVNot([a]) => {
                 let k = x(a).iter().map(|val| {
                     if let BVValue::BV(bv) = val {
@@ -116,10 +126,100 @@ impl Analysis<BVLanguage> for ConstantFoldBV {
                 }).collect();
                 Observations(k)
             },
+            BVLanguage::BVNeg([a]) => {
+                let k = x(a).iter().map(|val| {
+                    if let BVValue::BV(bv) = val {
+                        BVValue::BV(language_bv::bvneg(bv).unwrap())
+                    } else {
+                        panic!("{:?} not a BV", val);
+                    }
+                }).collect();
+                Observations(k)
+            },
             BVLanguage::BVAnd([a,b]) => {
                 let k = x(a).iter().zip(x(b).iter()).map(|val| {
                     if let (BVValue::BV(bva), BVValue::BV(bvb)) = val {
                         BVValue::BV(language_bv::bvand(bva, bvb).unwrap())
+                    } else {
+                        panic!("{:?} not two BVs", val);
+                    }
+                }).collect();
+                Observations(k)
+            },
+            BVLanguage::BVOr([a,b]) => {
+                let k = x(a).iter().zip(x(b).iter()).map(|val| {
+                    if let (BVValue::BV(bva), BVValue::BV(bvb)) = val {
+                        BVValue::BV(language_bv::bvor(bva, bvb).unwrap())
+                    } else {
+                        panic!("{:?} not two BVs", val);
+                    }
+                }).collect();
+                Observations(k)
+            },
+            BVLanguage::BVMul([a,b]) => {
+                let k = x(a).iter().zip(x(b).iter()).map(|val| {
+                    if let (BVValue::BV(bva), BVValue::BV(bvb)) = val {
+                        BVValue::BV(language_bv::bvor(bva, bvb).unwrap())
+                    } else {
+                        panic!("{:?} not two BVs", val);
+                    }
+                }).collect();
+                Observations(k)
+            },
+            BVLanguage::BVAdd([a,b]) => {
+                let k = x(a).iter().zip(x(b).iter()).map(|val| {
+                    if let (BVValue::BV(bva), BVValue::BV(bvb)) = val {
+                        BVValue::BV(language_bv::bvadd(bva, bvb).unwrap())
+                    } else {
+                        panic!("{:?} not two BVs", val);
+                    }
+                }).collect();
+                Observations(k)
+            },
+            BVLanguage::BVDiv([a,b]) => {
+                let k = x(a).iter().zip(x(b).iter()).map(|val| {
+                    if let (BVValue::BV(bva), BVValue::BV(bvb)) = val {
+                        BVValue::BV(language_bv::bvudiv(bva, bvb).unwrap())
+                    } else {
+                        panic!("{:?} not two BVs", val);
+                    }
+                }).collect();
+                Observations(k)
+            },
+            BVLanguage::BVRem([a,b]) => {
+                let k = x(a).iter().zip(x(b).iter()).map(|val| {
+                    if let (BVValue::BV(bva), BVValue::BV(bvb)) = val {
+                        BVValue::BV(language_bv::bvurem(bva, bvb).unwrap())
+                    } else {
+                        panic!("{:?} not two BVs", val);
+                    }
+                }).collect();
+                Observations(k)
+            },
+            BVLanguage::BVShl([a,b]) => {
+                let k = x(a).iter().zip(x(b).iter()).map(|val| {
+                    if let (BVValue::BV(bva), BVValue::BV(bvb)) = val {
+                        BVValue::BV(language_bv::bvshl(bva, bvb).unwrap())
+                    } else {
+                        panic!("{:?} not two BVs", val);
+                    }
+                }).collect();
+                Observations(k)
+            },
+            BVLanguage::BVShr([a,b]) => {
+                let k = x(a).iter().zip(x(b).iter()).map(|val| {
+                    if let (BVValue::BV(bva), BVValue::BV(bvb)) = val {
+                        BVValue::BV(language_bv::bvlshr(bva, bvb).unwrap())
+                    } else {
+                        panic!("{:?} not two BVs", val);
+                    }
+                }).collect();
+                Observations(k)
+            },
+            BVLanguage::BVUlt([a,b]) => {
+                let k = x(a).iter().zip(x(b).iter()).map(|val| {
+                    if let (BVValue::BV(bva), BVValue::BV(bvb)) = val {
+                        BVValue::Bool(language_bv::bvult(bva, bvb).unwrap())
                     } else {
                         panic!("{:?} not two BVs", val);
                     }

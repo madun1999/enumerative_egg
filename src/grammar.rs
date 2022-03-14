@@ -233,7 +233,7 @@ impl Grammar {
                 }
             }
         } else {
-            eprintln!("Should not calc_non_terminals after enumeration starts.");
+            eprintln!("Should not calc_terminals after enumeration starts.");
         }
     }
 

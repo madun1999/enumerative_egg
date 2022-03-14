@@ -128,8 +128,8 @@ pub struct BVLiteral
 //     fn bv2nat(bv: &BVLiteral) -> Result<Self, Self::Err>;
 // }
 
-fn nat2bv(size: usize, num: u32) -> Result<BVLiteral, String>{
-    if size > 32{
+fn nat2bv(size: usize, num: u64) -> Result<BVLiteral, String>{
+    if size > 64{
         Err(format!("Wrong size: {}", size))
     }else{
         let mut ret_val = BVLiteral{ length: size, value: vec![false; size] };
@@ -138,11 +138,11 @@ fn nat2bv(size: usize, num: u32) -> Result<BVLiteral, String>{
     }
 }
 
-fn bv2nat(bv: &BVLiteral) -> Result<u32, String> {
-    if bv.length > 32{
+fn bv2nat(bv: &BVLiteral) -> Result<u64, String> {
+    if bv.length > 64{
         Err(format!("Bitvector too long: {}", bv.length ))
     }else{
-        Ok(bv.value.iter().rev().fold(0, |acc, b| ((acc << 1) | *b as u32)))
+        Ok(bv.value.iter().rev().fold(0, |acc, b| ((acc << 1) | *b as u64)))
     }
 }
 
@@ -264,7 +264,7 @@ pub fn bvextract(i:usize, j:usize, this: &BVLiteral) -> Option<BVLiteral>{
 } 
 
 pub fn bvneg(this: &BVLiteral) -> Option<BVLiteral>{
-    if this.length > 32{
+    if this.length > 64{
         None
     }else {
         Some(nat2bv(this.length, (2 << (this.length - 1)) - bv2nat(this).ok()?).ok()?)
@@ -272,7 +272,7 @@ pub fn bvneg(this: &BVLiteral) -> Option<BVLiteral>{
 } 
 
 pub fn bvadd(this: &BVLiteral, that: &BVLiteral) -> Option<BVLiteral>{
-    if this.length != that.length || this.length > 32{
+    if this.length != that.length || this.length > 64{
         None
     }else {
         let ret_val = bv2nat(this).ok()?.checked_add(bv2nat(that).ok()?)?;
@@ -281,7 +281,7 @@ pub fn bvadd(this: &BVLiteral, that: &BVLiteral) -> Option<BVLiteral>{
 } 
 
 pub fn bvmul(this: &BVLiteral, that: &BVLiteral) -> Option<BVLiteral>{
-    if this.length != that.length || this.length > 32{
+    if this.length != that.length || this.length > 64{
         None
     }else {
         let ret_val = bv2nat(this).ok()?.checked_mul(bv2nat(that).ok()?)?;
@@ -290,7 +290,7 @@ pub fn bvmul(this: &BVLiteral, that: &BVLiteral) -> Option<BVLiteral>{
 } 
 
 pub fn bvudiv(this: &BVLiteral, that: &BVLiteral) -> Option<BVLiteral>{
-    if this.length != that.length || this.length > 32{
+    if this.length != that.length || this.length > 64{
         None
     }else{
         let ret_val = bv2nat(this).ok()?.checked_div(bv2nat(that).ok()?);
@@ -305,7 +305,7 @@ pub fn bvudiv(this: &BVLiteral, that: &BVLiteral) -> Option<BVLiteral>{
 } 
 
 pub fn bvurem(this: &BVLiteral, that: &BVLiteral) -> Option<BVLiteral>{
-    if this.length != that.length || this.length > 32{
+    if this.length != that.length || this.length > 64{
         None
     }else{
         let ret_val = bv2nat(this).ok()?.checked_rem(bv2nat(that).ok()?);
@@ -318,7 +318,7 @@ pub fn bvurem(this: &BVLiteral, that: &BVLiteral) -> Option<BVLiteral>{
 
 pub fn bvshl(this: &BVLiteral, that: &BVLiteral) -> Option<BVLiteral>{
 
-    if this.length != that.length || this.length > 32{
+    if this.length != that.length || this.length > 64{
         None
     }else{
         let ret_val = bv2nat(this).ok()? << (bv2nat(that).ok()?);
@@ -328,7 +328,7 @@ pub fn bvshl(this: &BVLiteral, that: &BVLiteral) -> Option<BVLiteral>{
 
 pub fn bvlshr(this: &BVLiteral, that: &BVLiteral) -> Option<BVLiteral>{
 
-    if this.length != that.length || this.length > 32{
+    if this.length != that.length || this.length > 64{
         None
     }else{
         let ret_val = bv2nat(this).ok()? >> (bv2nat(that).ok()?);
@@ -338,7 +338,7 @@ pub fn bvlshr(this: &BVLiteral, that: &BVLiteral) -> Option<BVLiteral>{
 
 
 pub fn bvult(this: &BVLiteral, that: &BVLiteral) -> Option<bool>{
-    if this.length != that.length || this.length > 32{
+    if this.length != that.length || this.length > 64{
         None
     }else{
         Some(bv2nat(this).ok()? < (bv2nat(that).ok()?))
