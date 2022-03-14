@@ -9,6 +9,7 @@ use egg::Id;
 
 use egg::EGraph;
 use itertools::Itertools;
+use symbolic_expressions::Sexp;
 use crate::language_bv::BVLanguage;
 use crate::language_bv::BVValue;
 use crate::language_bv::BV_OPS;
@@ -114,7 +115,7 @@ pub struct GEnumerator{ // TODO: Make it generic <L: From Op,V:Something> , BV f
     pts: Vec<Assignment<BVValue>>,
     true_obs: Vec<Observations<BVValue>>,
     grammar: Grammar,
-    bank: EGraph<BVLanguage, ConstantFoldBV>,
+    pub bank: EGraph<BVLanguage, ConstantFoldBV>,
     started_enumeration: bool,
 }
 
@@ -194,6 +195,11 @@ impl GEnumerator{
         // Call this after adding all the pts
         let analysis = ConstantFoldBV::new(self.pts.clone());
         self.bank = EGraph::new(analysis);
+    }
+
+    pub fn sexp_vec(&mut self, id: usize) -> Vec<Sexp> {
+        // enumerate a vector of Sexps in eclass id
+        self.bank.classes().skip(id).next().unwrap().sexp_vect(&self.bank, &Default::default())
     }
 }
 pub trait HasOpString {

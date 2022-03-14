@@ -1,0 +1,23 @@
+[
+    {"x": BV(BVLiteral { length: 8, value: [true, true, true, true, false, false, false, false] }), "y": BV(BVLiteral { length: 8, value: [true, true, false, false, true, true, false, false] })}, 
+    {"x": BV(BVLiteral { length: 8, value: [true, true, false, false, true, true, false, false] }), "y": BV(BVLiteral { length: 8, value: [true, true, true, true, false, false, false, false] })}
+    ]
+
+{
+    ObsId(0): Observations([BV(BVLiteral { length: 8, value: [true, true, true, true, false, false, false, false] }), BV(BVLiteral { length: 8, value: [true, true, false, false, true, true, false, false] })]), 
+    ObsId(1): Observations([BV(BVLiteral { length: 8, value: [true, true, true, true, false, false, false, false] }), BV(BVLiteral { length: 8, value: [true, true, true, true, false, false, false, false] })]), 
+    ObsId(2): Observations([BV(BVLiteral { length: 8, value: [true, true, true, true, false, false, false, false] }), BV(BVLiteral { length: 8, value: [true, true, false, false, false, false, false, false] })]), 
+    ObsId(3): Observations([BV(BVLiteral { length: 8, value: [false, false, false, false, true, true, true, true] }), BV(BVLiteral { length: 8, value: [false, false, true, true, false, false, true, true] })]), 
+    ObsId(4): Observations([BV(BVLiteral { length: 8, value: [false, false, false, false, true, true, true, true] }), BV(BVLiteral { length: 8, value: [false, false, false, false, true, true, true, true] })]), 
+    ObsId(5): Observations([BV(BVLiteral { length: 8, value: [false, false, false, false, false, false, false, false] }), BV(BVLiteral { length: 8, value: [false, false, false, false, false, false, false, false] })]), 
+    ObsId(6): Observations([BV(BVLiteral { length: 8, value: [false, false, false, false, false, false, false, false] }), BV(BVLiteral { length: 8, value: [false, false, false, false, true, true, false, false] })]), 
+    ObsId(7): Observations([BV(BVLiteral { length: 8, value: [false, false, false, false, false, false, false, false] }), BV(BVLiteral { length: 8, value: [false, false, true, true, false, false, false, false] })]), 
+    ObsId(8): Observations([BV(BVLiteral { length: 8, value: [false, false, false, false, true, true, true, true] }), BV(BVLiteral { length: 8, value: [false, false, false, false, false, false, true, true] })]), 
+    ObsId(9): Observations([BV(BVLiteral { length: 8, value: [false, false, false, false, true, true, true, true] }), BV(BVLiteral { length: 8, value: [false, false, true, true, true, true, true, true] })]), 
+    ObsId(10): Observations([BV(BVLiteral { length: 8, value: [true, true, true, true, false, false, false, false] }), BV(BVLiteral { length: 8, value: [true, true, true, true, true, true, false, false] })]), 
+    ObsId(11): Observations([BV(BVLiteral { length: 8, value: [true, true, true, true, true, true, true, true] }), BV(BVLiteral { length: 8, value: [true, true, true, true, false, false, true, true] })]), 
+    ObsId(12): Observations([BV(BVLiteral { length: 8, value: [true, true, true, true, true, true, true, true] }), BV(BVLiteral { length: 8, value: [true, true, false, false, true, true, true, true] })]), 
+    ObsId(13): Observations([BV(BVLiteral { length: 8, value: [true, true, true, true, true, true, true, true] }), BV(BVLiteral { length: 8, value: [true, true, true, true, true, true, true, true] })]), 
+    ObsId(14): Observations([BV(BVLiteral { length: 8, value: [true, true, true, true, true, true, true, true] }), BV(BVLiteral { length: 8, value: [true, true, false, false, false, false, true, true] })]), 
+    ObsId(15): Observations([BV(BVLiteral { length: 8, value: [false, false, false, false, false, false, false, false] }), BV(BVLiteral { length: 8, value: [false, false, true, true, true, true, false, false] })])
+}
