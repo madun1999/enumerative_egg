@@ -55,7 +55,7 @@ pub fn test_enumerator() {
     assert_eq!(egraph.rebuild(), 0);
 
     for id in [c,f] {
-        let sexp_vec = egraph[id].sexp_vect(&egraph, &Default::default());
+        let sexp_vec = egraph[id].sexp_vect(&egraph, &Default::default(), 0);
         let str_vec:Vec<String> = sexp_vec.iter().map(|x| x.to_string()).collect();
         println!("{:?}", str_vec);
     }

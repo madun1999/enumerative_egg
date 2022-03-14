@@ -288,12 +288,12 @@ impl GEnumerator{
 
     pub fn sexp_vec(&mut self, id: usize) -> Vec<Sexp> {
         // enumerate a vector of Sexps in eclass id
-        self.bank.classes().skip(id).next().unwrap().sexp_vect(&self.bank, &Default::default())
+        self.bank.classes().skip(id).next().unwrap().sexp_vect(&self.bank, &Default::default(), 0)
     }
 }
-pub trait HasOpString {
-    fn get_op_string(&self) -> String;
-}
+// pub trait HasOpString {
+//     fn get_op_string(&self) -> String;
+// }
 
 
 

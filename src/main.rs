@@ -476,11 +476,11 @@ fn quick_verify(ctx: &mut Context, list_cex: &Vec<Vec<(String, String, String)>>
 // }
 
 fn main() {
-    run();
+    // run();
     //language_bv::test_bvliteral();
     // language_bv_test::test_observation_folding();
     // language_bv_test::test_enumerator();
-    //g_enumerator_test::test_enumerator();
+    g_enumerator_test::test_enumerator();
 }
 
 fn run() {

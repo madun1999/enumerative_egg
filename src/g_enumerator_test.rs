@@ -120,7 +120,7 @@ pub fn test_enumerator() {
     println!("{:?}", g_enum);
     println!();
 
-    for i in 0..2 { // max 6 is enough
+    for i in 0..6 { // max 6 is enough
         let bank = g_enum.one_iter();
         println!();
         println!("Generated dot file! My egraph dot file: target/foo{}.svg", i);
@@ -133,8 +133,12 @@ pub fn test_enumerator() {
         // println!("Bank has these observations: {:?}", bank.analysis.id_obs);
     }
     // assert_eq!(g_enum.bank.number_of_classes(), 16);
-
-    println!("Enumerating EClass 4: {:?}", g_enum.sexp_vec(4))
+    let str_vec = g_enum.sexp_vec(4);
+    for sexp in &str_vec {
+        println!("{}", sexp);
+    }
+    // println!("{:?}", str_vec);
+    println!("Enumerating EClass 4: {:?}", str_vec)
     
     
     // 
