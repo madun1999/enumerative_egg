@@ -3,4 +3,4 @@
 	url = https://github.com/SyGuS-Org/benchmarks.git
 [submodule "egg"]
 	path = egg
-	url = git@github.com:egraphs-good/egg.git
+	url = https://github.com/madun1999/egg.git
