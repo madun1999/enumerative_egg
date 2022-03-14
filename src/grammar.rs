@@ -3,11 +3,15 @@ use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 use std::ops::Deref;
 use std::vec;
+use egg::CostFunction;
 use egg::EClass;
+use egg::Extractor;
 use egg::FromOp;
 use egg::Id;
 
 use egg::EGraph;
+use egg::Language;
+use egg::RecExpr;
 use itertools::Itertools;
 use symbolic_expressions::Sexp;
 use crate::language_bv::BVLanguage;
@@ -280,15 +284,48 @@ impl GEnumerator{
         // Call reset bank after adding all the pts
         self.pts.push(a);
     }
+
     pub fn reset_bank(&mut self) {
         // Call this after adding all the pts
         let analysis = ConstantFoldBV::new(self.pts.clone());
         self.bank = EGraph::new(analysis);
+        self.started_enumeration = false;
     }
 
     pub fn sexp_vec(&mut self, id: usize) -> Vec<Sexp> {
         // enumerate a vector of Sexps in eclass id
         self.bank.classes().skip(id).next().unwrap().sexp_vect(&self.bank, &Default::default(), 0)
+    }
+
+    pub fn sexp_vec_id(&mut self, id: Id) -> Vec<Sexp> {
+        // enumerate a vector of Sexps in eclass id
+        self.bank[id].sexp_vect(&self.bank, &Default::default(), 0)
+    }
+
+    pub fn one_per_class(&mut self) -> Vec<(Id,RecExpr<BVLanguage>)> {
+        // take one expression from every class
+        let cost_fn = NoObsAstSizeCostFn::default();
+        let extractor = Extractor::new(&self.bank, cost_fn);
+        self.bank.classes().map(|x| {
+            (x.id, extractor.find_best(x.id).1)
+        }).collect()
+    }
+    
+}
+
+#[derive(Debug, Default)]
+struct NoObsAstSizeCostFn;
+impl CostFunction<BVLanguage> for NoObsAstSizeCostFn {
+    type Cost = f64;
+    fn cost<C>(&mut self, enode: &BVLanguage, mut costs:C) -> Self::Cost 
+    where 
+        C: FnMut(Id) -> Self::Cost
+    {
+        let op_cost = match enode {
+            BVLanguage::Obs(_) => f64::INFINITY,
+            _ => 1.0
+        };
+        enode.fold(op_cost, |sum, id| sum + costs(id))
     }
 }
 // pub trait HasOpString {

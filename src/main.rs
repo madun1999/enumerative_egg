@@ -1,4 +1,5 @@
 use std::borrow::{Borrow, BorrowMut};
+use egg::Id;
 use regex::{Match, Regex};
 //use z3::ast::{Ast, Real};
 //use z3::{SatResult, Solver, Config, Context};
@@ -8,6 +9,7 @@ use std::fs::File;
 use std::fs;
 use std::io::{self, BufRead};
 use std::ops::Index;
+use core::fmt::Debug;
 use std::path::Path;
 use smt2parser::{CommandStream, concrete, visitors};
 use lexpr;
@@ -16,6 +18,8 @@ use lexpr::Value;
 use rsmt2::prelude::{Expr2Smt, Sym2Smt};
 use smt2parser::concrete::{parse_simple_attribute_value};
 use smt2parser::concrete::Sort::Simple;
+
+use crate::grammar::{Grammar, GEnumerator};
 
 mod grammar;
 mod language_bv;
@@ -28,13 +32,14 @@ pub fn write_str<W: io::Write>(w: &mut W, s: &str) -> SmtRes<()> {
     Ok(())
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Parser;
 
 type Symbol = String;
 type Sort = String;
 type Param = (Symbol, Sort);
 
+#[derive(Debug, Clone)]
 pub struct Func{
     symbol: Symbol,
     params: Vec<Param>,
@@ -55,6 +60,7 @@ impl Func {
     }
 }
 
+
 pub struct Context {
     init: bool,
     /// rsmt2 Solver
@@ -67,6 +73,12 @@ pub struct Context {
     constraints: Vec<String>,
     /// function list
     synth_funcs: Vec<Func>
+}
+
+impl Debug for Context {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Context").field("init", &self.init).field("lexpr_list", &self.lexpr_list).field("variables", &self.variables).field("constraints", &self.constraints).field("synth_funcs", &self.synth_funcs).finish()
+    }
 }
 
 impl Context {
@@ -476,14 +488,120 @@ fn quick_verify(ctx: &mut Context, list_cex: &Vec<Vec<(String, String, String)>>
 // }
 
 fn main() {
-    // run();
+    run();
     //language_bv::test_bvliteral();
     // language_bv_test::test_observation_folding();
     // language_bv_test::test_enumerator();
-    g_enumerator_test::test_enumerator();
+    // g_enumerator_test::test_enumerator();
 }
 
 fn run() {
+
+    let paths = fs::read_dir("./benchmarks/lib/General_Track/bv-conditional-inverses/").unwrap();
+
+    for path in paths {
+        let mut ctx = parse_file_and_create_ctx(path.unwrap().path().to_str().unwrap());
+        // println!("{:?}\n", ctx);
+        parse_prefix(& mut ctx);
+        // println!("{:?}\n", ctx);
+        
+        let mut list_cex: Vec<Vec<(String, String, String)>> = Vec::new();
+        let mut candidates: Vec<(String, String, String)> = Vec::new(); // TODO: to egg
+        if ctx.synth_funcs.get(0).is_none() {continue;}
+        let mut g = Grammar::default();
+        let synth_funcs = ctx.synth_funcs.clone();
+        let func = synth_funcs.get(0).unwrap();
+        
+        // Test parsing grammar
+        // grammar::test_grammar(&func.grammar);
+
+        // g_enumerator_test::test_enumerator_sexpr(&func.grammar);
+        g = Grammar::new_from_sexpr(&func.grammar);
+
+        g.calc_terminals();
+        let mut g_enum = GEnumerator::new(g.clone());
+        // ctx.solver.define_fun(func.symbol.clone(), func.params.clone(), func.return_type.clone(), "#xF"); // what's this?
+        // parse_define(&mut ctx);
+        g_enum.reset_bank();
+        loop {
+            // reset bank
+            
+            // run until there is a class that might be correct
+            let mut bank = g_enum.one_iter();
+            let mut quick_correct: Option<Id> = None;
+            while quick_correct.is_none() {
+                for (id, sexp) in g_enum.one_per_class() { // where to use sexp?
+                    
+                    ctx.solver.define_fun(func.symbol.clone(), func.params.clone(), func.return_type.clone(), sexp.to_string());
+                    parse_define(&mut ctx);
+                    if quick_verify(&mut ctx, &list_cex){
+                        quick_correct = Some(id);
+                        ctx.solver.reset();
+                        break;
+                    }
+                    ctx.solver.reset();
+                }
+                bank = g_enum.one_iter();
+            }
+
+            let candidates = g_enum.sexp_vec_id(quick_correct.unwrap());
+            for candidate in candidates {
+                println!("{}", candidate.to_string());
+                // TODO: quick verify on counter example set
+                // if !quick_verify(&mut ctx, &list_cex){
+                //     ctx.solver.reset(); // reset needed because our function will be different.
+                //     continue;
+                // }
+                ctx.solver.define_fun(func.symbol.clone(), func.params.clone(), func.return_type.clone(), candidate.to_string());
+                parse_define(&mut ctx);
+                // Get counter-example TODO: refactor into a function
+                parse_constraints(&mut ctx);
+                ctx.init = true;
+                let result = ctx.solver.check_sat();
+                let mut cex = Vec::new();
+                match result {
+                    Ok(res) => {
+                        //println!("ok");
+                        if !res{
+                            println!("No counter-example");
+                            break;
+                        }
+                        let model = ctx.solver.get_model().unwrap();
+                        //`Vec<(std::string::String, Vec<(std::string::String, std::string::String)>, std::string::String, std::string::String)>`
+                        /// "s", [], "(_ BitVec 4)", "#xd"
+                        /// "t", [], "(_ BitVec 4)", "#x5"
+                        /// "min", [], "(_ BitVec 4)", "(bvnot (bvlshr (bvnot #x0) #x1))" ??
+                        /// "max", [], "(_ BitVec 4)", "(bvnot (bvnot (bvlshr (bvnot #x0) #x1)))" ??
+
+                        println!("Counter-example:");
+                        let range = ctx.variables.len();
+                        for res in &model.to_vec()[..range] {
+                            cex.push((res.0.to_string(), res.2.to_string(), res.3.to_string()));
+                            println!("{} : {} -> {}", res.0, res.2, res.3);
+                        }
+                        list_cex.push(cex);
+                        ctx.solver.reset();
+                    },
+                    Err(e) => {
+                        println!("error {}", e);
+                    }
+                }
+            }
+
+            g_enum.reset_bank();
+        }
+        println!("End");
+
+    }
+
+    //let stream = CommandStream::new(&data.as_slice()[..], concrete::SyntaxBuilder, Some("".to_string()));
+    //let commands = stream.collect::<Result<Vec<_>, _>>().unwrap();
+    println!("{}", "hello");
+
+}
+
+
+fn run_old() {
 
     let paths = fs::read_dir("./benchmarks/lib/General_Track/bv-conditional-inverses/").unwrap();
 
@@ -555,5 +673,3 @@ fn run() {
     println!("{}", "hello");
 
 }
-
-
