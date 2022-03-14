@@ -20,6 +20,8 @@ use smt2parser::concrete::Sort::Simple;
 mod grammar;
 mod language_bv;
 mod observation_folding_bv;
+mod language_bv_test;
+mod g_enumerator_test;
 
 pub fn write_str<W: io::Write>(w: &mut W, s: &str) -> SmtRes<()> {
     w.write_all(s.as_bytes())?;
@@ -474,8 +476,11 @@ fn quick_verify(ctx: &mut Context, list_cex: &Vec<Vec<(String, String, String)>>
 // }
 
 fn main() {
-    run();
+    // run();
     //language_bv::test_bvliteral();
+    // language_bv_test::test_observation_folding();
+    // language_bv_test::test_enumerator();
+    g_enumerator_test::test_enumerator();
 }
 
 fn run() {
