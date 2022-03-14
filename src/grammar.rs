@@ -235,7 +235,12 @@ impl Grammar {
                     },
                     Value::Cons(_) => {
                         // Nothing
-                        production.rhs.0.push(Term::NonTerminal(NonTerminal(val.to_string())));
+                        if val.to_string().contains(list[0].to_string()) {
+                            production.rhs.0.push(Term::NonTerminal(NonTerminal(val.to_string())));
+                        }else{
+                            grammar.terminals.get_mut(&non_term).unwrap().push(Terminal(val.to_string()));
+                            production.rhs.0.push(Term::Terminal(Terminal(val.to_string())));
+                        }
                     }
                     _ => {
                         println!("Shouldn't happens: {} in grammar parsing", val);
