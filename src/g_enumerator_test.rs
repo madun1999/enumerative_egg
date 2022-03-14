@@ -61,10 +61,10 @@ pub fn test_enumerator_sexpr(sexpr: &Vec<Value>) {
         let bank = g_enum.one_iter();
         println!();
         println!("Generated dot file! My egraph dot file: target/foo{}.svg", i);
-        bank.dot().to_svg(format!("target/foo{}.svg", i)).unwrap();
+        // bank.dot().to_svg(format!("target/foo{}.svg", i)).unwrap();
         // println!("{:?}", bank);
         println!();
-        println!("Bank has {:?} many EClasses and {:?} many ENodes", bank.number_of_classes(), bank.total_size());
+        println!("Bank has {:?} EClasses and {:?} ENodes", bank.number_of_classes(), bank.total_size());
     }
 
 

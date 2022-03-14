@@ -111,6 +111,7 @@ impl Analysis<BVLanguage> for ConstantFoldBV {
             BVLanguage::BV(lit) => Observations(vec![BVValue::BV(lit.clone()); assignments.len()]),
             BVLanguage::Var(var) => {
                 Observations(assignments.iter().map(|assignment| {
+                    println!("{}", var.to_string());
                     assignment.get(&var.to_string()).unwrap().clone()
                 }).collect())
             },
@@ -179,6 +180,16 @@ impl Analysis<BVLanguage> for ConstantFoldBV {
                 let k = x(a).iter().zip(x(b).iter()).map(|val| {
                     if let (BVValue::BV(bva), BVValue::BV(bvb)) = val {
                         BVValue::BV(language_bv::bvadd(bva, bvb).unwrap())
+                    } else {
+                        panic!("{:?} not two BVs", val);
+                    }
+                }).collect();
+                Observations(k)
+            },
+            BVLanguage::BVSub([a,b]) => {
+                let k = x(a).iter().zip(x(b).iter()).map(|val| {
+                    if let (BVValue::BV(bva), BVValue::BV(bvb)) = val {
+                        BVValue::BV(language_bv::bvsub(bva, bvb).unwrap())
                     } else {
                         panic!("{:?} not two BVs", val);
                     }

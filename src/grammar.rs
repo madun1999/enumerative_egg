@@ -110,6 +110,95 @@ pub struct Grammar {
     start: NonTerminal
 }
 
+pub struct SimpleEnumerator {
+    pts: Vec<Assignment<BVValue>>,
+    true_obs: Vec<Observations<BVValue>>,
+    grammar: Grammar,
+    pub bank: BTreeMap<Observations<BVValue>, String>, // one other observation value
+    started_enumeration: bool,
+}
+
+// impl SimpleEnumerator {
+//     pub fn one_iter(&mut self) -> &EGraph<BVLanguage, ConstantFoldBV> {
+//         // If not started, put all terminals in the bank
+//         if !self.started_enumeration {
+//             self.started_enumeration = true;
+//             for (non_terminal, terminals) in &self.grammar.terminals { // TODO: use non_term
+//                 for terminal in terminals {
+//                     if !BV_OPS.contains(&terminal.0.as_str()) {
+//                         let sync_term= BVLanguage::from_op(&terminal.0, vec![]);
+//                         match sync_term {
+//                             Ok(BVLanguage::Bool(k)) => {
+//                                 self.bank.entry()
+//                             }
+//                             Err(e) => {
+//                                 println!("{:?}", e)
+//                             }
+//                         }
+//                     }
+                   
+//                 }
+//             }
+//             self.bank.rebuild();
+        
+//         } else {
+//             let mut new_enodes:Vec<BVLanguage> = vec![];
+//             for prod in &self.grammar.productions { // TODO: support different nonterminals
+//                 // For each production Term -> Vec<String> with terminals A1, A2, .., Ak on the rhs
+//                 //   let non_terms be the NonTerm vector in the rhs (size k)
+//                 let non_terms = &prod.rhs.get_non_terms();
+//                 let rhs = &prod.rhs;
+//                 let k = non_terms.len();
+//                 let mut term_to_ids :BTreeMap<NonTerminal, Vec<Id>> = Default::default();
+//                 term_to_ids.insert(NonTerminal("Start".to_string()), self.bank.classes().map(|x| x.id).collect());
+//                 // let a  = non_terms.iter().map(|x| term_to_ids.get(x).unwrap()).multi_cartesian_product();
+//                 for substance in non_terms.iter().map(|x| term_to_ids.get(x).unwrap()).multi_cartesian_product() {
+//                     //   for <p1, p2, .., pk> in b[A1] x b[A2] x .. x b[An]:
+//                     //       add rhs[A1 -> p1, .. , Ak -> pk] to the list of new enodes
+//                     new_enodes.push(rhs.instantiate(substance, &mut self.bank));
+//                 }
+//             }    
+
+            
+//             // Add all new enodes to bank
+//             for enode in new_enodes {
+//                 self.bank.add(enode);
+//             }
+//             // rebuild bank
+//             self.bank.rebuild();
+//         }
+
+//         // return &bank     
+//         return &self.bank;
+//     }
+
+//     pub fn new(grammar: Grammar) -> Self{
+        
+//         SimpleEnumerator { 
+//             bank: EGraph::new(ConstantFoldBV::default()),
+//             pts: vec![],
+//             grammar: grammar,
+//             true_obs: vec![],
+//             started_enumeration: false,
+            
+//         } 
+//     }
+//     pub fn add_pts(&mut self, a: Assignment<BVValue>) {
+//         // Call reset bank after adding all the pts
+//         self.pts.push(a);
+//     }
+//     pub fn reset_bank(&mut self) {
+//         // Call this after adding all the pts
+//         let analysis = ConstantFoldBV::new(self.pts.clone());
+//         self.bank = EGraph::new(analysis);
+//     }
+
+//     pub fn sexp_vec(&mut self, id: usize) -> Vec<Sexp> {
+//         // enumerate a vector of Sexps in eclass id
+//         self.bank.classes().skip(id).next().unwrap().sexp_vect(&self.bank, &Default::default())
+//     }
+// }
+
 #[derive(Debug)]
 pub struct GEnumerator{ // TODO: Make it generic <L: From Op,V:Something> , BV for now
     pts: Vec<Assignment<BVValue>>,

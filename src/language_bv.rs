@@ -21,7 +21,7 @@ use symbolic_expressions::Sexp;
 use crate::observation_folding_bv::ConstantFoldBV;
 use crate::observation_folding_bv::ObsId;
 
-pub const BV_OPS : [&'static str; 19] = [
+pub const BV_OPS : [&'static str; 20] = [
     "not",
     "and",
     "or",
@@ -37,10 +37,11 @@ pub const BV_OPS : [&'static str; 19] = [
     "bvor",
     "bvmul",
     "bvadd",
+    "bvsub",
     "bvudiv",
     "bvurem",
     "bvshl",
-    "bvshr",
+    "bvlshr",
     "bvult",
 ];
 
@@ -75,10 +76,11 @@ define_language! {
         "bvor" = BVOr([Id; 2]),
         "bvmul" = BVMul([Id; 2]),
         "bvadd" = BVAdd([Id; 2]),
+        "bvsub" = BVSub([Id; 2]),
         "bvudiv" = BVDiv([Id; 2]),
         "bvurem" = BVRem([Id; 2]),
         "bvshl" = BVShl([Id; 2]),
-        "bvshr" = BVShr([Id; 2]),
+        "bvlshr" = BVShr([Id; 2]), // Notice name difference, legacy problem
         "bvult" = BVUlt([Id; 2]),
 
 
@@ -280,6 +282,11 @@ pub fn bvadd(this: &BVLiteral, that: &BVLiteral) -> Option<BVLiteral>{
     }
 } 
 
+pub fn bvsub(this: &BVLiteral, that: &BVLiteral) -> Option<BVLiteral>{
+    let second = bvneg(that)?;
+    bvadd(this, that)
+} 
+
 pub fn bvmul(this: &BVLiteral, that: &BVLiteral) -> Option<BVLiteral>{
     if this.length != that.length || this.length > 64{
         None
@@ -465,6 +472,14 @@ impl<'a, 'b> ToSexp<'a, 'b> for BVLanguage {
                     }).collect()
                 // }
             },
+            BVLanguage::BVSub([a,b]) => {
+                // if forbid.contains(b) || forbid.contains(a) {vec![]} else {
+                    iproduct!(get_class(a).sexp_vect(egraph, forbid).iter(),get_class(b).sexp_vect(egraph, forbid).iter()).map(
+                        |(a, b)|{
+                        Sexp::List(vec![Sexp::String("bvsub".to_string()), a.clone(), b.clone()])
+                    }).collect()
+                // }
+            },
             BVLanguage::BVDiv([a,b]) => {
                 // if forbid.contains(b) || forbid.contains(a) {vec![]} else {
                     iproduct!(get_class(a).sexp_vect(egraph, forbid).iter(),get_class(b).sexp_vect(egraph, forbid).iter()).map(
@@ -493,7 +508,7 @@ impl<'a, 'b> ToSexp<'a, 'b> for BVLanguage {
                 // if forbid.contains(b) || forbid.contains(a) {vec![]} else {
                     iproduct!(get_class(a).sexp_vect(egraph, forbid).iter(),get_class(b).sexp_vect(egraph, forbid).iter()).map(
                         |(a, b)|{
-                        Sexp::List(vec![Sexp::String("bvshr".to_string()), a.clone(), b.clone()])
+                        Sexp::List(vec![Sexp::String("bvlshr".to_string()), a.clone(), b.clone()])
                     }).collect()
                 // }
             },
@@ -507,6 +522,7 @@ impl<'a, 'b> ToSexp<'a, 'b> for BVLanguage {
             },
             BVLanguage::Var(v) => vec![Sexp::String(v.to_string())],
             BVLanguage::Other(_, _) => vec![],
+            
         }
     }
 
