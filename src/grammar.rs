@@ -234,6 +234,31 @@ impl Grammar {
             // val[1]: sort
         //}
 
+        // let bvand_t = Term::Terminal(Terminal("bvand".to_string()));
+        // let bvnot_t = Term::Terminal(Terminal("bvnot".to_string()));
+        // let x_t = Term::Terminal(Terminal("x".to_string()));
+        // let bv_t = Term::Terminal(Terminal("#b00001111".to_string()));
+        //
+        // let start_nt = Term::NonTerminal(NonTerminal("Start".to_string()));
+        //
+        // let start = NonTerminal("Start".to_string());
+        //
+        // let rhs_bvand = vec![bvand_t.clone(), start_nt.clone(), start_nt.clone()];
+        // let rhs_bvnot =   vec![bvnot_t.clone(), start_nt.clone()];
+        // let rhs_x = (vec![x_t]);
+        // let rhs_bv = (vec![bv_t]);
+        //
+        // let mut g = Grammar::new(Default::default(), "Start".to_string());
+        // let prods = vec![
+        //     rhs_bvand.clone(),
+        //     rhs_bvnot.clone(),
+        //     rhs_x.clone(),
+        //     rhs_bv.clone()
+        // ];
+        // for prod in prods {
+        //     g.add_rule(start.clone(), prod)
+        // }
+
         for rule in sexpr[1].to_vec().unwrap(){ // parse rule
             let list = rule.to_vec().unwrap();
             // rule[0]: non-terminal name
@@ -243,31 +268,37 @@ impl Grammar {
             //println!("Test parsing grammar: {}", list[2]);
             let non_term = NonTerminal(list[0].to_string());
             let mut production = Production{ lhs: non_term.clone(), rhs: RHS(vec![])};
-            grammar.non_terminals.insert(non_term.clone());
-            grammar.terminals.insert(non_term.clone(), vec![]);
+            //grammar.non_terminals.insert(non_term.clone());
+            //grammar.terminals.insert(non_term.clone(), vec![]);
 
             for val in list[2].to_vec().unwrap(){
                 //println!("Test parsing grammar: {}", val);
                 match val{
                     Value::Number(_) | Value::Bool(_) | Value::Symbol(_) =>{
-                        grammar.terminals.get_mut(&non_term).unwrap().push(Terminal(val.to_string()));
-                        production.rhs.0.push(Term::Terminal(Terminal(val.to_string())));
+                        //grammar.terminals.get_mut(&non_term).unwrap().push(Terminal(val.to_string()));
+                        grammar.add_rule(non_term.clone(), vec![Term::Terminal(Terminal(val.to_string()))]);
+                        //production.rhs.0.push(Term::Terminal(Terminal(val.to_string())));
                     },
                     Value::Cons(_) => {
                         // Nothing
-                        if val.to_string().contains(&list[0].to_string()) {
-                            production.rhs.0.push(Term::NonTerminal(NonTerminal(val.to_string())));
-                        }else{
-                            grammar.terminals.get_mut(&non_term).unwrap().push(Terminal(val.to_string()));
-                            production.rhs.0.push(Term::Terminal(Terminal(val.to_string())));
+                        //production.rhs.0.push();
+                        let mut prod = vec![Term::Terminal(Terminal(val.to_vec().unwrap()[0].to_string()))];
+                        for ind in 1..val.to_vec().unwrap().len(){
+                            prod.push(Term::NonTerminal(NonTerminal(val.to_vec().unwrap()[ind].to_string())));
                         }
+                        grammar.add_rule(non_term.clone(), prod);
+                        // if val.to_string().contains(&list[0].to_string()) {
+                        //     production.rhs.0.push(Term::NonTerminal(NonTerminal(val.to_string())));
+                        // }else{
+                        //     grammar.terminals.get_mut(&non_term).unwrap().push(Terminal(val.to_string()));
+                        //     production.rhs.0.push(Term::Terminal(Terminal(val.to_string())));
+                        // }
                     }
                     _ => {
                         println!("Shouldn't happens: {} in grammar parsing", val);
                     }
                 }
             }
-            grammar.productions.push(production);
         }
 
         grammar
