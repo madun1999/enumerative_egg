@@ -6,5 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-egg = "0.7.1"
+#egg = "0.7.1"
 itertools= "0.10.2"
+symbolic_expressions = "5"
+
+[dependencies.egg]
+path = "./egg"

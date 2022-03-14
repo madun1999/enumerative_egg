@@ -1,12 +1,24 @@
+use std::collections::BTreeSet;
 use std::fmt::Debug;
 use std::fmt::Display;
+use std::ops::Deref;
 use std::str::FromStr;
 use std::vec;
 
+use egg::Analysis;
+use egg::EClass;
+use egg::EGraph;
+use egg::Language;
 use egg::define_language;
 use egg::Id;
 use egg::Symbol;
+use egg::ToSexp;
+use itertools::Itertools;
+use itertools::MultiProduct;
+use itertools::iproduct;
+use symbolic_expressions::Sexp;
 
+use crate::observation_folding_bv::ConstantFoldBV;
 use crate::observation_folding_bv::ObsId;
 
 pub const BV_OPS : [&'static str; 19] = [
@@ -333,3 +345,180 @@ pub fn bvult(this: &BVLiteral, that: &BVLiteral) -> Option<bool>{
     }
 } 
 
+impl<'a, 'b> ToSexp<'a, 'b> for BVLanguage {
+    type N = ConstantFoldBV;
+
+    fn enumerate_expr(&self, egraph:&'a EGraph<BVLanguage, ConstantFoldBV>, forbid: &BTreeSet<Id>) -> Vec<Sexp> {
+        let get_class = |i: &Id| &egraph[*i];
+        match self {
+            BVLanguage::Bool(b) => vec![Sexp::String(b.to_string())],
+            BVLanguage::BV(bv) => vec![Sexp::String(bv.to_string())],
+            BVLanguage::Obs(obs) => vec![],
+            BVLanguage::Not([b]) => {
+                if forbid.contains(b) {vec![]} else {
+                    get_class(b).sexp_vect(egraph, forbid).iter().map(|x|{
+                        Sexp::List(vec![Sexp::String("not".to_string()), x.clone()])
+                    }).collect()
+                }
+            },
+            BVLanguage::And([a,b]) => todo!(),
+            BVLanguage::Or([a,b]) => todo!(),
+            BVLanguage::Xor([a,b]) => todo!(),
+            BVLanguage::Implies([a,b]) => todo!(),
+            BVLanguage::Equals([a,b]) => todo!(),
+            BVLanguage::ITE([a,b,c]) => todo!(),
+            BVLanguage::BVConcat([a,b]) => {
+                if forbid.contains(b) || forbid.contains(a) {vec![]} else {
+                    iproduct!(get_class(a).sexp_vect(egraph, forbid).iter(),get_class(b).sexp_vect(egraph, forbid).iter()).map(
+                        |(a, b)|{
+                        Sexp::List(vec![Sexp::String("bvconcat".to_string()), a.clone(), b.clone()])
+                    }).collect()
+                }
+            },
+            BVLanguage::BVNot([a]) => todo!(),
+            BVLanguage::BVNeg([a]) => todo!(),
+            BVLanguage::BVAnd([a,b]) => todo!(),
+            BVLanguage::BVOr([a,b]) => todo!(),
+            BVLanguage::BVMul([a,b]) => todo!(),
+            BVLanguage::BVAdd([a,b]) => todo!(),
+            BVLanguage::BVDiv([a,b]) => todo!(),
+            BVLanguage::BVRem([a,b]) => todo!(),
+            BVLanguage::BVShl([a,b]) => todo!(),
+            BVLanguage::BVShr([a,b]) => todo!(),
+            BVLanguage::BVUlt([a,b]) => todo!(),
+            BVLanguage::Var(v) => todo!(),
+            BVLanguage::Other(_, _) => vec![],
+        }
+    }
+
+    
+}
+
+
+
+
+
+// impl<'a> ToSexp<'a> for BVLanguage {
+//     type LanguageIter = BVLanguageIter<'a>;
+//     type N = ConstantFoldBV;
+
+//     fn enumerate_expr(&self, egraph:&'a EGraph<BVLanguage, ConstantFoldBV>, forbid: &BTreeSet<Id>) -> Self::LanguageIter {
+//         let get_class = |i: &Id| &egraph[*i];
+//         match self {
+//             BVLanguage::Bool(b) => BVLanguageIter {
+//                 egraph: egraph,
+//                 forbid: forbid.clone(),
+//                 children_iter: None,
+//                 head: b.to_string(),
+//                 constant: true,
+//                 ended: false,
+//             },
+//             BVLanguage::BV(bv) => BVLanguageIter {
+//                 egraph: egraph,
+//                 forbid: forbid.clone(),
+//                 children_iter: None,
+//                 head: bv.to_string(),
+//                 constant: true,
+//                 ended: false,
+//             },
+//             BVLanguage::Obs(obs) => BVLanguageIter {
+//                 egraph: egraph,
+//                 forbid: Default::default(),
+//                 children_iter: None,
+//                 head: Default::default(),
+//                 constant: true,
+//                 ended: true,
+//             },
+//             BVLanguage::Not([b]) => {
+//                 if forbid.contains(b) {BVLanguageIter {
+//                     egraph: egraph,
+//                     forbid: Default::default(),
+//                     children_iter: None,
+//                     head: Default::default(),
+//                     constant: true,
+//                     ended: true,
+//                 }} else {
+//                     BVLanguageIter {
+//                         egraph: egraph,
+//                         forbid: forbid.clone(),
+//                         children_iter: Some(get_class(b).enumerate_expr(egraph, forbid)),
+//                         head: "not".to_string(),
+//                         constant: false,
+//                         ended: false,
+//                     }
+//                 }
+                
+//             },
+//             BVLanguage::And([a,b]) => todo!(),
+//             BVLanguage::Or([a,b]) => todo!(),
+//             BVLanguage::Xor([a,b]) => todo!(),
+//             BVLanguage::Implies([a,b]) => todo!(),
+//             BVLanguage::Equals([a,b]) => todo!(),
+//             BVLanguage::ITE([a,b,c]) => todo!(),
+//             BVLanguage::BVConcat([a,b]) => {
+//                 if forbid.contains(b) || forbid.contains(a) {None}
+//                 else {
+//                     let l = iproduct!(get_class(a).enumerate_expr(egraph, forbid), get_class(b).enumerate_expr(egraph, forbid)).map(
+//                         |(a,b)| 
+//                         Sexp::List(vec![Sexp::String("bvconcat".to_string()), a, b])
+//                     );
+//                     Some(Box::new(
+//                         iproduct!(get_class(a).enumerate_expr(egraph, forbid), get_class(b).enumerate_expr(egraph, forbid)).map(
+//                             |(a,b)| 
+//                             Sexp::List(vec![Sexp::String("bvconcat".to_string()), a, b])
+//                         )
+//                     ))
+//                 }
+//             },
+//             BVLanguage::BVNot([a]) => todo!(),
+//             BVLanguage::BVNeg([a]) => todo!(),
+//             BVLanguage::BVAnd([a,b]) => todo!(),
+//             BVLanguage::BVOr([a,b]) => todo!(),
+//             BVLanguage::BVMul([a,b]) => todo!(),
+//             BVLanguage::BVAdd([a,b]) => todo!(),
+//             BVLanguage::BVDiv([a,b]) => todo!(),
+//             BVLanguage::BVRem([a,b]) => todo!(),
+//             BVLanguage::BVShl([a,b]) => todo!(),
+//             BVLanguage::BVShr([a,b]) => todo!(),
+//             BVLanguage::BVUlt([a,b]) => todo!(),
+//             BVLanguage::Var(v) => todo!(),
+//             BVLanguage::Other(_, _) => None,
+//         }
+//     }
+
+    
+// }
+
+
+// #[derive(Debug, Clone)]
+// pub struct BVLanguageIter<'a> {
+//     egraph: &'a EGraph<BVLanguage, ConstantFoldBV>,
+//     forbid: BTreeSet<Id>,
+//     children_iter: Option<std::slice::Iter<'a, Vec<Sexp>>>,
+//     head: String,
+//     constant: bool,
+//     ended: bool,
+// }
+
+// impl <'a> Iterator for BVLanguageIter<'a>{
+//     type Item = Sexp;
+
+//     fn next(&mut self) -> Option<Self::Item> {
+//         if self.ended {
+//             None
+//         } else if self.constant {
+//             self.ended = true;
+//             Some(Sexp::String(self.head.clone()))
+//         } else {
+//             let next_children = self.children_iter.as_mut().unwrap().next();
+//             if let Some(mut unwrapped_next_children) = next_children {
+//                 unwrapped_next_children.insert( 0, Sexp::String(self.head));
+//                 Some(Sexp::List(*unwrapped_next_children))
+//             } else {
+//                 None
+//             }
+//         }
+        
+        
+//     }
+// }

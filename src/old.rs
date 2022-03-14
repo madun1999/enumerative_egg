@@ -65,3 +65,38 @@
 
 
 
+// use std::fmt::Display;
+// use std::{fmt::Debug};
+
+// use symbolic_expressions::Sexp;
+
+// /// Simple AST
+// #[derive(Debug, Clone)]
+// #[cfg_attr(feature = "serde-1", derive(serde::Serialize, serde::Deserialize))]
+// pub enum AST<V> {
+//     /// The AST is a leaf
+//     Leaf(V),
+//     /// The AST is not leaf, and has a list of children
+//     Node(Box<Vec<AST<V>>>),
+// }
+
+// impl<V:Display> Display for AST<V> {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         match self {
+//             AST::Leaf(val) => val.fmt(f),
+//             AST::Node(childs) => {
+//                 write!(f, "(")?;
+//                 let mut first = true;
+//                 for x in childs.iter() {
+//                     if first {
+//                         write!(f, "{}", x)?;
+//                         first = false;
+//                     } else {
+//                         write!(f, " {}", x)?;
+//                     }
+//                 }
+//                 write!(f, ")")
+//             }
+//         }
+//     }
+// }

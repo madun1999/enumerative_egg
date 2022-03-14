@@ -58,7 +58,7 @@ impl FromStr for ObsId {
     }
 }
 
-#[derive(Debug,Default)]
+#[derive(Debug,Default, Clone)]
 pub struct ConstantFoldBV {
     assignments: Vec<Assignment<BVValue>>,
     obs_id: BTreeMap<Observations<BVValue>, ObsId>,

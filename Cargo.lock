@@ -23,8 +23,6 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 [[package]]
 name = "egg"
 version = "0.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a9f1058c150e258252353a8f8e6d41036ced7d266390114d121abf2ace6e1b6b"
 dependencies = [
  "fxhash",
  "hashbrown",
@@ -49,6 +47,7 @@ version = "0.1.0"
 dependencies = [
  "egg",
  "itertools",
+ "symbolic_expressions",
 ]
 
 [[package]]
