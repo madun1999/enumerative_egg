@@ -361,12 +361,54 @@ impl<'a, 'b> ToSexp<'a, 'b> for BVLanguage {
                     }).collect()
                 }
             },
-            BVLanguage::And([a,b]) => todo!(),
-            BVLanguage::Or([a,b]) => todo!(),
-            BVLanguage::Xor([a,b]) => todo!(),
-            BVLanguage::Implies([a,b]) => todo!(),
-            BVLanguage::Equals([a,b]) => todo!(),
-            BVLanguage::ITE([a,b,c]) => todo!(),
+            BVLanguage::And([a,b]) => {
+                if forbid.contains(b) || forbid.contains(a) {vec![]} else {
+                    iproduct!(get_class(a).sexp_vect(egraph, forbid).iter(),get_class(b).sexp_vect(egraph, forbid).iter()).map(
+                        |(a, b)|{
+                        Sexp::List(vec![Sexp::String("and".to_string()), a.clone(), b.clone()])
+                    }).collect()
+                }
+            },
+            BVLanguage::Or([a,b]) => {
+                if forbid.contains(b) || forbid.contains(a) {vec![]} else {
+                    iproduct!(get_class(a).sexp_vect(egraph, forbid).iter(),get_class(b).sexp_vect(egraph, forbid).iter()).map(
+                        |(a, b)|{
+                        Sexp::List(vec![Sexp::String("or".to_string()), a.clone(), b.clone()])
+                    }).collect()
+                }
+            },
+            BVLanguage::Xor([a,b]) => {
+                if forbid.contains(b) || forbid.contains(a) {vec![]} else {
+                    iproduct!(get_class(a).sexp_vect(egraph, forbid).iter(),get_class(b).sexp_vect(egraph, forbid).iter()).map(
+                        |(a, b)|{
+                        Sexp::List(vec![Sexp::String("xor".to_string()), a.clone(), b.clone()])
+                    }).collect()
+                }
+            },
+            BVLanguage::Implies([a,b]) => {
+                if forbid.contains(b) || forbid.contains(a) {vec![]} else {
+                    iproduct!(get_class(a).sexp_vect(egraph, forbid).iter(),get_class(b).sexp_vect(egraph, forbid).iter()).map(
+                        |(a, b)|{
+                        Sexp::List(vec![Sexp::String("=>".to_string()), a.clone(), b.clone()])
+                    }).collect()
+                }
+            },
+            BVLanguage::Equals([a,b]) => {
+                if forbid.contains(b) || forbid.contains(a) {vec![]} else {
+                    iproduct!(get_class(a).sexp_vect(egraph, forbid).iter(),get_class(b).sexp_vect(egraph, forbid).iter()).map(
+                        |(a, b)|{
+                        Sexp::List(vec![Sexp::String("=".to_string()), a.clone(), b.clone()])
+                    }).collect()
+                }
+            },
+            BVLanguage::ITE([a,b,c]) => {
+                if forbid.contains(b) || forbid.contains(a) || forbid.contains(c) {vec![]} else {
+                    iproduct!(get_class(a).sexp_vect(egraph, forbid).iter(),get_class(b).sexp_vect(egraph, forbid).iter(), get_class(c).sexp_vect(egraph, forbid).iter()).map(
+                        |(a, b,c)|{
+                        Sexp::List(vec![Sexp::String("ite".to_string()), a.clone(), b.clone(), c.clone()])
+                    }).collect()
+                }
+            },
             BVLanguage::BVConcat([a,b]) => {
                 if forbid.contains(b) || forbid.contains(a) {vec![]} else {
                     iproduct!(get_class(a).sexp_vect(egraph, forbid).iter(),get_class(b).sexp_vect(egraph, forbid).iter()).map(
@@ -375,18 +417,93 @@ impl<'a, 'b> ToSexp<'a, 'b> for BVLanguage {
                     }).collect()
                 }
             },
-            BVLanguage::BVNot([a]) => todo!(),
-            BVLanguage::BVNeg([a]) => todo!(),
-            BVLanguage::BVAnd([a,b]) => todo!(),
-            BVLanguage::BVOr([a,b]) => todo!(),
-            BVLanguage::BVMul([a,b]) => todo!(),
-            BVLanguage::BVAdd([a,b]) => todo!(),
-            BVLanguage::BVDiv([a,b]) => todo!(),
-            BVLanguage::BVRem([a,b]) => todo!(),
-            BVLanguage::BVShl([a,b]) => todo!(),
-            BVLanguage::BVShr([a,b]) => todo!(),
-            BVLanguage::BVUlt([a,b]) => todo!(),
-            BVLanguage::Var(v) => todo!(),
+            BVLanguage::BVNot([b]) => {
+                if forbid.contains(b) {vec![]} else {
+                    get_class(b).sexp_vect(egraph, forbid).iter().map(|x|{
+                        Sexp::List(vec![Sexp::String("bvnot".to_string()), x.clone()])
+                    }).collect()
+                }
+            },
+            BVLanguage::BVNeg([b]) => {
+                if forbid.contains(b) {vec![]} else {
+                    get_class(b).sexp_vect(egraph, forbid).iter().map(|x|{
+                        Sexp::List(vec![Sexp::String("bvneg".to_string()), x.clone()])
+                    }).collect()
+                }
+            },
+            BVLanguage::BVAnd([a,b]) => {
+                if forbid.contains(b) || forbid.contains(a) {vec![]} else {
+                    iproduct!(get_class(a).sexp_vect(egraph, forbid).iter(),get_class(b).sexp_vect(egraph, forbid).iter()).map(
+                        |(a, b)|{
+                        Sexp::List(vec![Sexp::String("bvand".to_string()), a.clone(), b.clone()])
+                    }).collect()
+                }
+            },
+            BVLanguage::BVOr([a,b]) => {
+                if forbid.contains(b) || forbid.contains(a) {vec![]} else {
+                    iproduct!(get_class(a).sexp_vect(egraph, forbid).iter(),get_class(b).sexp_vect(egraph, forbid).iter()).map(
+                        |(a, b)|{
+                        Sexp::List(vec![Sexp::String("bvor".to_string()), a.clone(), b.clone()])
+                    }).collect()
+                }
+            },
+            BVLanguage::BVMul([a,b]) => {
+                if forbid.contains(b) || forbid.contains(a) {vec![]} else {
+                    iproduct!(get_class(a).sexp_vect(egraph, forbid).iter(),get_class(b).sexp_vect(egraph, forbid).iter()).map(
+                        |(a, b)|{
+                        Sexp::List(vec![Sexp::String("bvmul".to_string()), a.clone(), b.clone()])
+                    }).collect()
+                }
+            },
+            BVLanguage::BVAdd([a,b]) => {
+                if forbid.contains(b) || forbid.contains(a) {vec![]} else {
+                    iproduct!(get_class(a).sexp_vect(egraph, forbid).iter(),get_class(b).sexp_vect(egraph, forbid).iter()).map(
+                        |(a, b)|{
+                        Sexp::List(vec![Sexp::String("bvadd".to_string()), a.clone(), b.clone()])
+                    }).collect()
+                }
+            },
+            BVLanguage::BVDiv([a,b]) => {
+                if forbid.contains(b) || forbid.contains(a) {vec![]} else {
+                    iproduct!(get_class(a).sexp_vect(egraph, forbid).iter(),get_class(b).sexp_vect(egraph, forbid).iter()).map(
+                        |(a, b)|{
+                        Sexp::List(vec![Sexp::String("bvdiv".to_string()), a.clone(), b.clone()])
+                    }).collect()
+                }
+            },
+            BVLanguage::BVRem([a,b]) => {
+                if forbid.contains(b) || forbid.contains(a) {vec![]} else {
+                    iproduct!(get_class(a).sexp_vect(egraph, forbid).iter(),get_class(b).sexp_vect(egraph, forbid).iter()).map(
+                        |(a, b)|{
+                        Sexp::List(vec![Sexp::String("bvrem".to_string()), a.clone(), b.clone()])
+                    }).collect()
+                }
+            },
+            BVLanguage::BVShl([a,b]) => {
+                if forbid.contains(b) || forbid.contains(a) {vec![]} else {
+                    iproduct!(get_class(a).sexp_vect(egraph, forbid).iter(),get_class(b).sexp_vect(egraph, forbid).iter()).map(
+                        |(a, b)|{
+                        Sexp::List(vec![Sexp::String("bvshl".to_string()), a.clone(), b.clone()])
+                    }).collect()
+                }
+            },
+            BVLanguage::BVShr([a,b]) => {
+                if forbid.contains(b) || forbid.contains(a) {vec![]} else {
+                    iproduct!(get_class(a).sexp_vect(egraph, forbid).iter(),get_class(b).sexp_vect(egraph, forbid).iter()).map(
+                        |(a, b)|{
+                        Sexp::List(vec![Sexp::String("bvshr".to_string()), a.clone(), b.clone()])
+                    }).collect()
+                }
+            },
+            BVLanguage::BVUlt([a,b]) => {
+                if forbid.contains(b) || forbid.contains(a) {vec![]} else {
+                    iproduct!(get_class(a).sexp_vect(egraph, forbid).iter(),get_class(b).sexp_vect(egraph, forbid).iter()).map(
+                        |(a, b)|{
+                        Sexp::List(vec![Sexp::String("bvult".to_string()), a.clone(), b.clone()])
+                    }).collect()
+                }
+            },
+            BVLanguage::Var(v) => vec![Sexp::String(v.to_string())],
             BVLanguage::Other(_, _) => vec![],
         }
     }
