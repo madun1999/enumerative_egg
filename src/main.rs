@@ -1,6 +1,7 @@
 mod grammar;
 mod language_bv;
 mod observation_folding_bv;
+mod language_bv_test;
 // // fn enumerator() -> impl Iterator<> {
 
 // // }
@@ -36,4 +37,6 @@ mod observation_folding_bv;
 
 fn main() {
     language_bv::test_bvliteral();
+    language_bv_test::test_observation_folding();
+    language_bv_test::test_enumerator();
 }
