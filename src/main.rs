@@ -327,7 +327,7 @@ fn parse_prefix(ctx: &mut Context){
         let vec_sexp = lexpr.to_vec().unwrap();
         match vec_sexp[0].to_string().as_str()
         {
-            "set-logic" | "synth-fun" | "declare-var"=> {
+            "set-logic" | "synth-fun" => {
                 parse_sexp(ctx, &lexpr);
             },
             _ => {
@@ -342,7 +342,7 @@ fn parse_define(ctx: &mut Context){
         let vec_sexp = lexpr.to_vec().unwrap();
         match vec_sexp[0].to_string().as_str()
         {
-            "define-fun" | "check-synth" => {
+            "define-fun" | "check-synth" | "declare-var" => {
                 parse_sexp(ctx, &lexpr);
             },
             _ => {
