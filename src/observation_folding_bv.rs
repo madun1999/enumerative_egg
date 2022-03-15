@@ -110,6 +110,7 @@ impl Analysis<BVLanguage> for ConstantFoldBV {
             BVLanguage::Bool(c) => Observations(vec![BVValue::Bool(*c); assignments.len()]),
             BVLanguage::BV(lit) => Observations(vec![BVValue::BV(lit.clone()); assignments.len()]),
             BVLanguage::Var(var) => {
+                // println!("{:?}", assignments);
                 Observations(assignments.iter().map(|assignment| {
                     // println!("{}", var.to_string());
                     assignment.get(&var.to_string()).unwrap().clone()

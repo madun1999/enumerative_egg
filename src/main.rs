@@ -635,8 +635,8 @@ async fn run_once(path: DirEntry) -> Result<bool, String>{
 
                 println!("Counter-example:");
                 let range = ctx.variables.len();
-
-                for res in &model.to_vec()[..range] {
+                // println!("Counter-example: {:?}", model);
+                for res in &model.to_vec() {
                     if ctx.var_set.contains(&res.0) {
                         cex.push((res.0.to_string(), res.2.to_string(), res.3.to_string()));
                         println!("{} : {} -> {}", res.0, res.2, res.3);
@@ -670,7 +670,7 @@ async fn run_once(path: DirEntry) -> Result<bool, String>{
 
 async fn run(){
 
-    let paths = fs::read_dir("./test").unwrap(); // "./benchmarks/lib/General_Track/bv-conditional-inverses/"
+    let paths = fs::read_dir("./test/individual").unwrap(); // "./benchmarks/lib/General_Track/bv-conditional-inverses/"
     let mut count = 0;
     for path in paths {
         let task = task::spawn(run_once(path.unwrap()));
@@ -691,7 +691,7 @@ async fn run(){
 
 fn run_old() {
 
-    let paths = fs::read_dir("./benchmarks/lib/General_Track/bv-conditional-inverses/").unwrap();
+    let paths = fs::read_dir("./benchmarks/lib/General_Track/bv-conditional-inverses/individual").unwrap();
 
     for path in paths {
         let mut ctx = parse_file_and_create_ctx(path.unwrap().path().to_str().unwrap());

@@ -13,6 +13,7 @@ symbolic_expressions = "5"
 #rsmt2 = "0.14.1"
 smt2parser = "0.6.1"
 regex = "1.5.4"
+tokio = {version= "1.17.0", features = ["full"]}
 
 [dependencies.lexpr]
 path = "./parser" # Make the parser local because I modified how it treat hex number
