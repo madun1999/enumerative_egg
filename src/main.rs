@@ -10,6 +10,7 @@ use std::fs;
 use std::io::{self, BufRead};
 use std::ops::Index;
 use core::fmt::Debug;
+use std::collections::BTreeMap;
 use std::path::Path;
 use smt2parser::{CommandStream, concrete, visitors};
 use lexpr;
@@ -62,7 +63,9 @@ impl Func {
 
 
 pub struct Context {
-    init: bool,
+    synth_init: bool,
+    constraint_init: bool,
+    var_init: bool,
     /// rsmt2 Solver
     solver: Solver<Parser>,
     /// lexpr list
@@ -77,7 +80,7 @@ pub struct Context {
 
 impl Debug for Context {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Context").field("init", &self.init).field("lexpr_list", &self.lexpr_list).field("variables", &self.variables).field("constraints", &self.constraints).field("synth_funcs", &self.synth_funcs).finish()
+        f.debug_struct("Context").field("lexpr_list", &self.lexpr_list).field("variables", &self.variables).field("constraints", &self.constraints).field("synth_funcs", &self.synth_funcs).finish()
     }
 }
 
@@ -86,7 +89,9 @@ impl Context {
     pub fn new(solver: Solver<Parser>) -> Self
     {
         Context {
-            init: false,
+            synth_init: false,
+            constraint_init: false,
+            var_init: false,
             solver: solver,
             lexpr_list : vec![],
             variables: vec![],
@@ -190,7 +195,7 @@ fn parse_synth_fun(ctx: &mut Context, sexp: & Value){
     let signatures = sexp_list[2].to_vec().unwrap();
     let return_type = sexp_list[3].to_string();
 
-    if !ctx.init {
+    if !ctx.synth_init {
         let mut func = Func::new();
         func.symbol = symbol;
         for sig in signatures {
@@ -230,7 +235,7 @@ fn parse_decl_var(ctx: &mut Context, sexp: & Value){
         let var_type = parse_sort(sort).unwrap();
         //println!("{}", var_type);
         ctx.solver.declare_const(symbol.to_string(), sort.to_string()).unwrap();
-        if !ctx.init{
+        if !ctx.var_init{
             ctx.variables.push((symbol.to_string(), sort.to_string()));
         }
 
@@ -287,7 +292,7 @@ fn parse_constraint(ctx: &mut Context, sexp: & Value, ){
     let mut constraint = &sexp.to_vec().unwrap()[1];
 
     //ctx.solver.assert(constraint.to_string()).unwrap();
-    if !ctx.init {
+    if !ctx.constraint_init {
         ctx.constraints.push(constraint.to_string());
     }
 }
@@ -335,6 +340,7 @@ fn parse_prefix(ctx: &mut Context){
             }
         }
     }
+    ctx.synth_init = true;
 }
 
 fn parse_define(ctx: &mut Context){
@@ -350,6 +356,7 @@ fn parse_define(ctx: &mut Context){
             }
         }
     }
+    ctx.var_init = true;
 }
 
 fn parse_constraints(ctx: &mut Context){
@@ -365,6 +372,7 @@ fn parse_constraints(ctx: &mut Context){
             }
         }
     }
+    ctx.constraint_init = true;
 
     // invert constraints and input assert
     let mut cons_str = "".to_owned();
@@ -529,9 +537,9 @@ fn run() {
             // run until there is a class that might be correct
             let mut bank = g_enum.one_iter();
             let mut quick_correct: Option<Id> = None;
-            while quick_correct.is_none() {
+            while quick_correct.is_none(){
                 for (id, sexp) in g_enum.one_per_class() { // where to use sexp?
-                    
+
                     ctx.solver.define_fun(func.symbol.clone(), func.params.clone(), func.return_type.clone(), sexp.to_string());
                     parse_define(&mut ctx);
                     if quick_verify(&mut ctx, &list_cex){
@@ -556,7 +564,6 @@ fn run() {
                 parse_define(&mut ctx);
                 // Get counter-example TODO: refactor into a function
                 parse_constraints(&mut ctx);
-                ctx.init = true;
                 let result = ctx.solver.check_sat();
                 let mut cex = Vec::new();
                 match result {
@@ -633,7 +640,6 @@ fn run_old() {
 
             // Get counter-example TODO: refactor into a function
             parse_constraints(&mut ctx);
-            ctx.init = true;
             let result = ctx.solver.check_sat();
             let mut cex = Vec::new();
             match result {
