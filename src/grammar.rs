@@ -2,6 +2,7 @@
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 use std::ops::Deref;
+use std::str::FromStr;
 use std::vec;
 use egg::CostFunction;
 use egg::EClass;
@@ -15,6 +16,7 @@ use egg::RecExpr;
 use itertools::Itertools;
 use symbolic_expressions::Sexp;
 use crate::language_bv::BVLanguage;
+use crate::language_bv::BVLiteral;
 use crate::language_bv::BVValue;
 use crate::language_bv::BV_OPS;
 use crate::observation_folding_bv::ConstantFoldBV;
@@ -283,6 +285,15 @@ impl GEnumerator{
     pub fn add_pts(&mut self, a: Assignment<BVValue>) {
         // Call reset bank after adding all the pts
         self.pts.push(a);
+    }
+
+    pub fn add_pts_vec(&mut self, pts: &Vec<(String, String, String)>) {
+        // Call reset bank after adding all the pts
+        let mut new_pts :Assignment<BVValue> = Default::default();
+        for pt in pts {
+            new_pts.insert(pt.0.clone(), BVValue::BV(BVLiteral::from_str(&pt.2).unwrap()));
+        }
+        self.pts.push(new_pts);
     }
 
     pub fn reset_bank(&mut self) {
