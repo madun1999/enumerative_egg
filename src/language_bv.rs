@@ -284,7 +284,7 @@ pub fn bvadd(this: &BVLiteral, that: &BVLiteral) -> Option<BVLiteral>{
 
 pub fn bvsub(this: &BVLiteral, that: &BVLiteral) -> Option<BVLiteral>{
     let second = bvneg(that)?;
-    bvadd(this, that)
+    bvadd(this, &second)
 } 
 
 pub fn bvmul(this: &BVLiteral, that: &BVLiteral) -> Option<BVLiteral>{

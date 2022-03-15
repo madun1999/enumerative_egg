@@ -1,5 +1,6 @@
 use std::borrow::{Borrow, BorrowMut};
 use std::collections::BTreeSet;
+use std::str::FromStr;
 use egg::{Id, LanguageChildren, RecExpr};
 use regex::{Match, Regex};
 //use z3::ast::{Ast, Real};
@@ -518,14 +519,18 @@ fn main() {
     // language_bv_test::test_observation_folding();
     // language_bv_test::test_enumerator();
     // g_enumerator_test::test_enumerator();
+    // test_quick_verify();
 }
 
 fn run() {
 
-    let paths = fs::read_dir("./test/").unwrap(); // "./benchmarks/lib/General_Track/bv-conditional-inverses/"
-
+    let paths = fs::read_dir("./test").unwrap(); // "./benchmarks/lib/General_Track/bv-conditional-inverses/"
+    let mut count = 0;
     for path in paths {
-        let mut ctx = parse_file_and_create_ctx(path.unwrap().path().to_str().unwrap());
+        let path_unwrapped = path.unwrap().path();
+        let filename = path_unwrapped.to_str().unwrap(); 
+        println!("Running file {}", &filename);
+        let mut ctx = parse_file_and_create_ctx(filename);
         // println!("{:?}\n", ctx);
         parse_prefix(& mut ctx);
         // println!("{:?}\n", ctx);
@@ -554,14 +559,17 @@ fn run() {
             // reset bank
             
             // run until there is a class that might be correct
-            let mut bank = g_enum.one_iter();
+            // g_enum.one_iter();
             let mut quick_correct: Option<Id> = None;
             let mut count = 0;
             let mut candidate: RecExpr<BVLanguage> = RecExpr::default();
             while quick_correct.is_none(){
-                for (id, sexp) in g_enum.one_per_class() { // where to use sexp?
+                g_enum.one_iter();
+                for (id, sexp) in g_enum.one_per_class() {
                     //println!("{}", sexp.to_string());
+                    // let correct = "(bvsub t s)".to_string();
                     ctx.solver.define_fun(func.symbol.clone(), func.params.clone(), func.return_type.clone(), sexp.to_string());
+                    // println!("{:?}", quick_verify(&mut ctx, &list_cex));
                     parse_define(&mut ctx);
                     if quick_verify(&mut ctx, &list_cex){
                         //println!("sexp: {}", sexp.to_string());
@@ -573,13 +581,20 @@ fn run() {
                     ctx.solver.reset();
                 }
                 count += 1;
-                println!("{}", count);
-                bank = g_enum.one_iter();
+                println!("Quick check iteration: {}", count);
+                let bank = &g_enum.bank;
+                // if let Some(correct_id) = bank.lookup_expr(&RecExpr::from_str("(bvsub t s)").unwrap()) {
+                //     println!("Found correct eclass: {:?}", correct_id);
+                //     println!("Best from that eclass is: {}", g_enum.one_from_class(correct_id));
+                //     println!("Data of that eclass is: {:?}", g_enum.get_data_from_class(correct_id));
+                //     println!("Counter examples are: {:?}", g_enum.get_pts());
+                // }
+                
             }
 
             //let candidates = g_enum.sexp_vec_id(quick_correct.unwrap());
-            println!("quick correct {}", quick_correct.unwrap().len());
-            println!("CEX {}", list_cex.len());
+            println!("quick correct id: {}", quick_correct.unwrap());
+            println!("number of counter examples present: {}", list_cex.len());
             //if candidates.len()==0{
             //    println!("eclass: {:?}", g_enum.bank[quick_correct.unwrap()])
             //}
@@ -638,10 +653,13 @@ fn run() {
                 break;
             }
             g_enum.reset_bank();
+            println!();
             
         }
         println!("Solution: {}", ctx.solution);
-        println!("End");
+        println!("End of {}\n", count);
+        count += 1;
+        // return;
 
     }
 

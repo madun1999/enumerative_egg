@@ -216,7 +216,8 @@ pub struct GEnumerator{ // TODO: Make it generic <L: From Op,V:Something> , BV f
 
 impl GEnumerator {
 
-    pub fn one_iter(&mut self) -> &EGraph<BVLanguage, ConstantFoldBV> {
+    // pub fn one_iter(&mut self) -> &EGraph<BVLanguage, ConstantFoldBV> {
+    pub fn one_iter(&mut self) {
         // If not started, put all terminals in the bank
         if !self.started_enumeration {
             self.started_enumeration = true;
@@ -237,10 +238,16 @@ impl GEnumerator {
                 }
             }
             self.bank.rebuild();
+            // println!("Generated dot file! My egraph dot file: target/foo{}.svg", self.bank.total_number_of_nodes());
+            // self.bank.dot().to_svg(format!("target/rebuild_test{}.svg", self.bank.total_number_of_nodes())).unwrap();
+            // println!("Rebuilding (init): {:?}",self.bank.rebuild());
+            // println!("Generated dot file! My egraph dot file: target/foo{}.svg", self.bank.total_number_of_nodes());
+            // self.bank.dot().to_svg(format!("target/rebuild_test{}.svg", self.bank.total_number_of_nodes())).unwrap();
         
         } else {
             let mut new_enodes:Vec<BVLanguage> = vec![];
             for prod in &self.grammar.productions { // TODO: support different nonterminals
+                // println!("{:?}", prod);
                 // For each production Term -> Vec<String> with terminals A1, A2, .., Ak on the rhs
                 //   let non_terms be the NonTerm vector in the rhs (size k)
                 let non_terms = &prod.rhs.get_non_terms();
@@ -249,24 +256,31 @@ impl GEnumerator {
                 let mut term_to_ids :BTreeMap<NonTerminal, Vec<Id>> = Default::default();
                 term_to_ids.insert(NonTerminal("Start".to_string()), self.bank.classes().map(|x| x.id).collect());
                 // let a  = non_terms.iter().map(|x| term_to_ids.get(x).unwrap()).multi_cartesian_product();
+                // println!("258 {:?}", prod);
                 for substance in non_terms.iter().map(|x| term_to_ids.get(x).unwrap()).multi_cartesian_product() {
+                    // println!("260");
                     //   for <p1, p2, .., pk> in b[A1] x b[A2] x .. x b[An]:
                     //       add rhs[A1 -> p1, .. , Ak -> pk] to the list of new enodes
                     new_enodes.push(rhs.instantiate(substance, &mut self.bank));
                 }
             }    
+            // println!("266");
 
             
             // Add all new enodes to bank
             for enode in new_enodes {
+                // println!("{:?}", enode);
                 self.bank.add(enode);
             }
+            // println!("273");
             // rebuild bank
             self.bank.rebuild();
+            // println!("Rebuilding (next): {:?}",self.bank.rebuild());
+            
         }
 
         // return &bank     
-        return &self.bank;
+        // return &self.bank;
     }
 }
 
@@ -320,6 +334,22 @@ impl GEnumerator{
         self.bank.classes().map(|x| {
             (x.id, extractor.find_best(x.id).1)
         }).collect()
+    }
+
+    pub fn one_from_class(&mut self, id: Id) -> RecExpr<BVLanguage> {
+         // take one expression from every class
+         let cost_fn = NoObsAstSizeCostFn::default();
+         let extractor = Extractor::new(&self.bank, cost_fn);
+         
+         extractor.find_best(id).1
+    }
+
+    pub fn get_data_from_class(&mut self, id: Id) -> Observations<BVValue> {
+        self.bank[id].data.clone()
+    }
+
+    pub fn get_pts(&mut self) -> Vec<BTreeMap<String, BVValue>> {
+        self.bank.analysis.assignments.clone()
     }
     
 }
