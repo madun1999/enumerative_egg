@@ -73,6 +73,7 @@ pub struct Context {
     lexpr_list : Vec<Value>,
     /// variable list
     variables : Vec<Param>,
+    var_set : BTreeSet<String>,
     /// constraint list
     constraints: Vec<String>,
     /// function list
@@ -96,6 +97,7 @@ impl Context {
             solver: solver,
             lexpr_list : vec![],
             variables: vec![],
+            var_set: Default::default(),
             constraints: vec![],
             synth_funcs: vec![]
         }
@@ -357,6 +359,12 @@ fn parse_define(ctx: &mut Context){
             }
         }
     }
+    
+    if !ctx.var_init{
+        ctx.var_set = BTreeSet::from_iter(ctx.variables.iter().map(|x|x.0.clone()));
+        println!("{:?} {:?}",ctx.var_set, ctx.variables);
+    }
+    
     ctx.var_init = true;
 }
 
@@ -586,10 +594,9 @@ fn run() {
 
                         println!("Counter-example:");
                         let range = ctx.variables.len();
-                        let var_set:BTreeSet<String> = BTreeSet::from_iter(ctx.variables.iter().map(|x|x.0.clone()));
-                        println!("{:?} {:?}",var_set, ctx.variables);
+                        
                         for res in &model.to_vec()[..range] {
-                            if var_set.contains(&res.0) {
+                            if ctx.var_set.contains(&res.0) {
                                 cex.push((res.0.to_string(), res.2.to_string(), res.3.to_string()));
                                 println!("{} : {} -> {}", res.0, res.2, res.3);
                             }
