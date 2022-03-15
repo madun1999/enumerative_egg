@@ -7,7 +7,7 @@ use regex::{Match, Regex};
 //use z3::{SatResult, Solver, Config, Context};
 use rsmt2::{Solver, SmtRes, Logic};
 use rsmt2::parse::{IdentParser, ModelParser, SmtParser, ValueParser};
-use std::fs::File;
+use std::fs::{DirEntry, File};
 use std::fs;
 use std::io::{self, BufRead};
 use std::ops::Index;
@@ -23,6 +23,12 @@ use rsmt2::prelude::{Expr2Smt, Sym2Smt};
 use smt2parser::concrete::{parse_simple_attribute_value};
 use smt2parser::concrete::Sort::Simple;
 use symbolic_expressions::Sexp;
+
+use tokio::time::timeout;
+use tokio::sync::oneshot;
+
+use std::time::Duration;
+use tokio::task;
 
 use crate::grammar::{Grammar, GEnumerator};
 use crate::language_bv::BVLanguage;
@@ -513,153 +519,166 @@ fn quick_verify(ctx: &mut Context, list_cex: &Vec<Vec<(String, String, String)>>
 //     }
 // }
 
-fn main() {
-    run();
+#[tokio::main]
+async fn main() -> Result<(), String> {
+    let op = run();
     //language_bv::test_bvliteral();
     // language_bv_test::test_observation_folding();
     // language_bv_test::test_enumerator();
     // g_enumerator_test::test_enumerator();
     // test_quick_verify();
+    op.await;
+    Ok(())
 }
 
-fn run() {
+async fn run_once(path: DirEntry) -> Result<bool, String>{
+    let path_unwrapped = path.path();
+    let filename = path_unwrapped.to_str().unwrap();
+    println!("Running file {}", &filename);
+    let mut ctx = parse_file_and_create_ctx(filename);
+    // println!("{:?}\n", ctx);
+    parse_prefix(& mut ctx);
+    // println!("{:?}\n", ctx);
+
+    let mut list_cex: Vec<Vec<(String, String, String)>> = Vec::new();
+    let mut candidates: Vec<(String, String, String)> = Vec::new(); // TODO: to egg
+    if ctx.synth_funcs.get(0).is_none() {return Ok(false);}
+    let mut g = Grammar::default();
+    let synth_funcs = ctx.synth_funcs.clone();
+    let func = synth_funcs.get(0).unwrap();
+
+    // Test parsing grammar
+    // grammar::test_grammar(&func.grammar);
+
+    // g_enumerator_test::test_enumerator_sexpr(&func.grammar);
+    g = Grammar::new_from_sexpr(&func.grammar);
+
+    g.calc_terminals();
+    let mut g_enum = GEnumerator::new(g.clone());
+    // ctx.solver.define_fun(func.symbol.clone(), func.params.clone(), func.return_type.clone(), "#xF"); // what's this?
+    // parse_define(&mut ctx);
+    g_enum.reset_bank();
+
+
+    loop {
+        // reset bank
+
+        // run until there is a class that might be correct
+        // g_enum.one_iter();
+        let mut quick_correct: Option<Id> = None;
+        let mut count = 0;
+        let mut candidate: RecExpr<BVLanguage> = RecExpr::default();
+        while quick_correct.is_none(){
+            g_enum.one_iter();
+            for (id, sexp) in g_enum.one_per_class() {
+                //println!("{}", sexp.to_string());
+                // let correct = "(bvsub t s)".to_string();
+                ctx.solver.define_fun(func.symbol.clone(), func.params.clone(), func.return_type.clone(), sexp.to_string());
+                // println!("{:?}", quick_verify(&mut ctx, &list_cex));
+                parse_define(&mut ctx);
+                if quick_verify(&mut ctx, &list_cex){
+                    //println!("sexp: {}", sexp.to_string());
+                    quick_correct = Some(id);
+                    candidate = sexp.clone();
+                    ctx.solver.reset();
+                    break;
+                }
+                ctx.solver.reset();
+            }
+            count += 1;
+            println!("Quick check iteration: {}", count);
+            let bank = &g_enum.bank;
+            // if let Some(correct_id) = bank.lookup_expr(&RecExpr::from_str("(bvsub t s)").unwrap()) {
+            //     println!("Found correct eclass: {:?}", correct_id);
+            //     println!("Best from that eclass is: {}", g_enum.one_from_class(correct_id));
+            //     println!("Data of that eclass is: {:?}", g_enum.get_data_from_class(correct_id));
+            //     println!("Counter examples are: {:?}", g_enum.get_pts());
+            // }
+
+        }
+
+        //let candidates = g_enum.sexp_vec_id(quick_correct.unwrap());
+        println!("quick correct id: {}", quick_correct.unwrap());
+        println!("number of counter examples present: {}", list_cex.len());
+        //if candidates.len()==0{
+        //    println!("eclass: {:?}", g_enum.bank[quick_correct.unwrap()])
+        //}
+        //for candidate in candidates {
+        println!("Candidate: {}", candidate.to_string());
+        // println!("{:?}", ctx.variables);
+        // TODO: quick verify on counter example set
+        // if !quick_verify(&mut ctx, &list_cex){
+        //     ctx.solver.reset(); // reset needed because our function will be different.
+        //     continue;
+        // }
+        ctx.solver.define_fun(func.symbol.clone(), func.params.clone(), func.return_type.clone(), candidate.to_string());
+        parse_define(&mut ctx);
+        // Get counter-example TODO: refactor into a function
+        parse_constraints(&mut ctx);
+        let result = ctx.solver.check_sat();
+        let mut cex = Vec::new();
+        match result {
+            Ok(res) => {
+                //println!("ok");
+                if !res{
+                    ctx.solved = true;
+                    ctx.solution = candidate.to_string();
+                    println!("No counter-example");
+                    break;
+                }
+                let model = ctx.solver.get_model().unwrap();
+                //`Vec<(std::string::String, Vec<(std::string::String, std::string::String)>, std::string::String, std::string::String)>`
+                /// "s", [], "(_ BitVec 4)", "#xd"
+                /// "t", [], "(_ BitVec 4)", "#x5"
+                /// "min", [], "(_ BitVec 4)", "(bvnot (bvlshr (bvnot #x0) #x1))" ??
+                /// "max", [], "(_ BitVec 4)", "(bvnot (bvnot (bvlshr (bvnot #x0) #x1)))" ??
+
+                println!("Counter-example:");
+                let range = ctx.variables.len();
+
+                for res in &model.to_vec()[..range] {
+                    if ctx.var_set.contains(&res.0) {
+                        cex.push((res.0.to_string(), res.2.to_string(), res.3.to_string()));
+                        println!("{} : {} -> {}", res.0, res.2, res.3);
+                    }
+                }
+                // cex = cex.iter().filter(|x|var_set.contains(&x.0)).collect();
+                g_enum.add_pts_vec(&cex);
+                list_cex.push(cex);
+                ctx.solver.reset();
+                //break;
+            },
+            Err(e) => {
+                println!("error {}", e);
+            }
+        }
+
+        //}
+        if ctx.solved{
+            break;
+        }
+        g_enum.reset_bank();
+        println!();
+    }
+    println!("Solution: {}", ctx.solution);
+    //println!("End of {}\n", count);
+    //count += 1;
+    // return;
+    Ok(true)
+}
+
+
+async fn run(){
 
     let paths = fs::read_dir("./test").unwrap(); // "./benchmarks/lib/General_Track/bv-conditional-inverses/"
     let mut count = 0;
     for path in paths {
-        let path_unwrapped = path.unwrap().path();
-        let filename = path_unwrapped.to_str().unwrap(); 
-        println!("Running file {}", &filename);
-        let mut ctx = parse_file_and_create_ctx(filename);
-        // println!("{:?}\n", ctx);
-        parse_prefix(& mut ctx);
-        // println!("{:?}\n", ctx);
-        
-        let mut list_cex: Vec<Vec<(String, String, String)>> = Vec::new();
-        let mut candidates: Vec<(String, String, String)> = Vec::new(); // TODO: to egg
-        if ctx.synth_funcs.get(0).is_none() {continue;}
-        let mut g = Grammar::default();
-        let synth_funcs = ctx.synth_funcs.clone();
-        let func = synth_funcs.get(0).unwrap();
-        
-        // Test parsing grammar
-        // grammar::test_grammar(&func.grammar);
+        let task = task::spawn(run_once(path.unwrap()));
 
-        // g_enumerator_test::test_enumerator_sexpr(&func.grammar);
-        g = Grammar::new_from_sexpr(&func.grammar);
-
-        g.calc_terminals();
-        let mut g_enum = GEnumerator::new(g.clone());
-        // ctx.solver.define_fun(func.symbol.clone(), func.params.clone(), func.return_type.clone(), "#xF"); // what's this?
-        // parse_define(&mut ctx);
-        g_enum.reset_bank();
-        
-        
-        loop {
-            // reset bank
-            
-            // run until there is a class that might be correct
-            // g_enum.one_iter();
-            let mut quick_correct: Option<Id> = None;
-            let mut count = 0;
-            let mut candidate: RecExpr<BVLanguage> = RecExpr::default();
-            while quick_correct.is_none(){
-                g_enum.one_iter();
-                for (id, sexp) in g_enum.one_per_class() {
-                    //println!("{}", sexp.to_string());
-                    // let correct = "(bvsub t s)".to_string();
-                    ctx.solver.define_fun(func.symbol.clone(), func.params.clone(), func.return_type.clone(), sexp.to_string());
-                    // println!("{:?}", quick_verify(&mut ctx, &list_cex));
-                    parse_define(&mut ctx);
-                    if quick_verify(&mut ctx, &list_cex){
-                        //println!("sexp: {}", sexp.to_string());
-                        quick_correct = Some(id);
-                        candidate = sexp.clone();
-                        ctx.solver.reset();
-                        break;
-                    }
-                    ctx.solver.reset();
-                }
-                count += 1;
-                println!("Quick check iteration: {}", count);
-                let bank = &g_enum.bank;
-                // if let Some(correct_id) = bank.lookup_expr(&RecExpr::from_str("(bvsub t s)").unwrap()) {
-                //     println!("Found correct eclass: {:?}", correct_id);
-                //     println!("Best from that eclass is: {}", g_enum.one_from_class(correct_id));
-                //     println!("Data of that eclass is: {:?}", g_enum.get_data_from_class(correct_id));
-                //     println!("Counter examples are: {:?}", g_enum.get_pts());
-                // }
-                
-            }
-
-            //let candidates = g_enum.sexp_vec_id(quick_correct.unwrap());
-            println!("quick correct id: {}", quick_correct.unwrap());
-            println!("number of counter examples present: {}", list_cex.len());
-            //if candidates.len()==0{
-            //    println!("eclass: {:?}", g_enum.bank[quick_correct.unwrap()])
-            //}
-            //for candidate in candidates {
-                println!("Candidate: {}", candidate.to_string());
-                // println!("{:?}", ctx.variables);
-                // TODO: quick verify on counter example set
-                // if !quick_verify(&mut ctx, &list_cex){
-                //     ctx.solver.reset(); // reset needed because our function will be different.
-                //     continue;
-                // }
-                ctx.solver.define_fun(func.symbol.clone(), func.params.clone(), func.return_type.clone(), candidate.to_string());
-                parse_define(&mut ctx);
-                // Get counter-example TODO: refactor into a function
-                parse_constraints(&mut ctx);
-                let result = ctx.solver.check_sat();
-                let mut cex = Vec::new();
-                match result {
-                    Ok(res) => {
-                        //println!("ok");
-                        if !res{
-                            ctx.solved = true;
-                            ctx.solution = candidate.to_string();
-                            println!("No counter-example");
-                            break;
-                        }
-                        let model = ctx.solver.get_model().unwrap();
-                        //`Vec<(std::string::String, Vec<(std::string::String, std::string::String)>, std::string::String, std::string::String)>`
-                        /// "s", [], "(_ BitVec 4)", "#xd"
-                        /// "t", [], "(_ BitVec 4)", "#x5"
-                        /// "min", [], "(_ BitVec 4)", "(bvnot (bvlshr (bvnot #x0) #x1))" ??
-                        /// "max", [], "(_ BitVec 4)", "(bvnot (bvnot (bvlshr (bvnot #x0) #x1)))" ??
-
-                        println!("Counter-example:");
-                        let range = ctx.variables.len();
-                        
-                        for res in &model.to_vec()[..range] {
-                            if ctx.var_set.contains(&res.0) {
-                                cex.push((res.0.to_string(), res.2.to_string(), res.3.to_string()));
-                                println!("{} : {} -> {}", res.0, res.2, res.3);
-                            }
-                        }
-                        // cex = cex.iter().filter(|x|var_set.contains(&x.0)).collect();
-                        g_enum.add_pts_vec(&cex);
-                        list_cex.push(cex);
-                        ctx.solver.reset();
-                        //break;
-                    },
-                    Err(e) => {
-                        println!("error {}", e);
-                    }
-                }
-                
-            //}
-            if ctx.solved{
-                break;
-            }
-            g_enum.reset_bank();
-            println!();
-            
+        // Wrap the future with a `Timeout` set to expire in 10 milliseconds.
+        if let Err(_) = timeout(Duration::from_secs(10), task).await {
+            println!("did not receive value within 10 seconds");
         }
-        println!("Solution: {}", ctx.solution);
-        println!("End of {}\n", count);
-        count += 1;
-        // return;
 
     }
 
