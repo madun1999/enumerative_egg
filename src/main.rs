@@ -7,7 +7,7 @@ use regex::{Match, Regex};
 //use z3::{SatResult, Solver, Config, Context};
 use rsmt2::{Solver, SmtRes, Logic};
 use rsmt2::parse::{IdentParser, ModelParser, SmtParser, ValueParser};
-use std::fs::File;
+use std::fs::{File, DirEntry};
 use std::fs;
 use std::io::{self, BufRead};
 use std::ops::Index;
@@ -513,22 +513,37 @@ fn quick_verify(ctx: &mut Context, list_cex: &Vec<Vec<(String, String, String)>>
 //     }
 // }
 
-fn main() {
-    run();
-    //language_bv::test_bvliteral();
-    // language_bv_test::test_observation_folding();
-    // language_bv_test::test_enumerator();
-    // g_enumerator_test::test_enumerator();
-    // test_quick_verify();
-}
+use std::time::Duration;
+use tokio::time::timeout;
 
-fn run() {
-
+#[tokio::main]
+async fn main() {
+    let time_out_seconds = 5; // set timeout
     let paths = fs::read_dir("./test").unwrap(); // "./benchmarks/lib/General_Track/bv-conditional-inverses/"
     let mut count = 0;
     for path in paths {
-        let path_unwrapped = path.unwrap().path();
-        let filename = path_unwrapped.to_str().unwrap(); 
+        let unwraped_path = path.unwrap().path();
+        let filename = unwraped_path.to_str().unwrap();
+        if let Ok(result) = timeout(Duration::from_millis(time_out_seconds), synth_file(filename)).await {
+            if let Some(time_used) = result {
+                println!("{} finished within {} milliseconds", filename, time_used);
+            } else {
+                println!("{} did not run", filename);
+            }
+            
+        } else {
+            println!("{} timed out at {} seconds", filename, time_out_seconds);
+        }
+        
+        count += 1;
+    }
+    println!("{}", "hello");
+
+}
+
+async fn synth_file(filename: &str) -> Option<u128>{
+        let start_time = std::time::Instant::now();
+
         println!("Running file {}", &filename);
         let mut ctx = parse_file_and_create_ctx(filename);
         // println!("{:?}\n", ctx);
@@ -537,7 +552,7 @@ fn run() {
         
         let mut list_cex: Vec<Vec<(String, String, String)>> = Vec::new();
         let mut candidates: Vec<(String, String, String)> = Vec::new(); // TODO: to egg
-        if ctx.synth_funcs.get(0).is_none() {continue;}
+        if ctx.synth_funcs.get(0).is_none() {return None;}
         let mut g = Grammar::default();
         let synth_funcs = ctx.synth_funcs.clone();
         let func = synth_funcs.get(0).unwrap();
@@ -592,13 +607,13 @@ fn run() {
                 
             }
 
-            //let candidates = g_enum.sexp_vec_id(quick_correct.unwrap());
+            let candidates = g_enum.sexp_vec_id(quick_correct.unwrap());
             println!("quick correct id: {}", quick_correct.unwrap());
             println!("number of counter examples present: {}", list_cex.len());
-            //if candidates.len()==0{
-            //    println!("eclass: {:?}", g_enum.bank[quick_correct.unwrap()])
-            //}
-            //for candidate in candidates {
+            if candidates.len()==0{
+               println!("eclass: {:?}", g_enum.bank[quick_correct.unwrap()])
+            }
+            for candidate in candidates {
                 println!("Candidate: {}", candidate.to_string());
                 // println!("{:?}", ctx.variables);
                 // TODO: quick verify on counter example set
@@ -648,7 +663,7 @@ fn run() {
                     }
                 }
                 
-            //}
+            }
             if ctx.solved{
                 break;
             }
@@ -657,87 +672,84 @@ fn run() {
             
         }
         println!("Solution: {}", ctx.solution);
-        println!("End of {}\n", count);
-        count += 1;
+        println!("End\n");
+        return Some(start_time.elapsed().as_millis());
         // return;
 
-    }
 
-    //let stream = CommandStream::new(&data.as_slice()[..], concrete::SyntaxBuilder, Some("".to_string()));
-    //let commands = stream.collect::<Result<Vec<_>, _>>().unwrap();
-    println!("{}", "hello");
+    
 
 }
 
 
-fn run_old() {
+// fn run_old() {
 
-    let paths = fs::read_dir("./benchmarks/lib/General_Track/bv-conditional-inverses/").unwrap();
+//     let paths = fs::read_dir("./benchmarks/lib/General_Track/bv-conditional-inverses/").unwrap();
 
-    for path in paths {
-        let mut ctx = parse_file_and_create_ctx(path.unwrap().path().to_str().unwrap());
-        parse_prefix(& mut ctx);
-        let mut list_cex: Vec<Vec<(String, String, String)>> = Vec::new();
-        let mut candidates: Vec<(String, String, String)> = Vec::new(); // TODO: to egg
-        loop {
-            /// TODO: enumerate new solution
-            /// candidates.push(?);
+//     for path in paths {
+//         let mut ctx = parse_file_and_create_ctx(path.unwrap().path().to_str().unwrap());
+//         parse_prefix(& mut ctx);
+//         let mut list_cex: Vec<Vec<(String, String, String)>> = Vec::new();
+//         let mut candidates: Vec<(String, String, String)> = Vec::new(); // TODO: to egg
+//         loop {
+//             /// TODO: enumerate new solution
+//             /// candidates.push(?);
 
-            for func in &ctx.synth_funcs {
-                // Test parsing grammar
-                // grammar::test_grammar(&func.grammar);
+//             for func in &ctx.synth_funcs {
+//                 // Test parsing grammar
+//                 // grammar::test_grammar(&func.grammar);
 
-                g_enumerator_test::test_enumerator_sexpr(&func.grammar);
-                ctx.solver.define_fun(func.symbol.clone(), func.params.clone(), func.return_type.clone(), "#xF");
-            }
+//                 g_enumerator_test::test_enumerator_sexpr(&func.grammar);
+//                 ctx.solver.define_fun(func.symbol.clone(), func.params.clone(), func.return_type.clone(), "#xF");
+//             }
 
-            // parse defined functions
-            parse_define(&mut ctx);
+//             // parse defined functions
+//             parse_define(&mut ctx);
 
-            // TODO: quick verify on counter example set
-            if !quick_verify(&mut ctx, &list_cex){
-                ctx.solver.reset(); // reset needed because our function will be different.
-                continue;
-            }
+//             // TODO: quick verify on counter example set
+//             if !quick_verify(&mut ctx, &list_cex){
+//                 ctx.solver.reset(); // reset needed because our function will be different.
+//                 continue;
+//             }
 
-            // Get counter-example TODO: refactor into a function
-            parse_constraints(&mut ctx);
-            let result = ctx.solver.check_sat();
-            let mut cex = Vec::new();
-            match result {
-                Ok(res) => {
-                    //println!("ok");
-                    if !res{
-                        println!("No counter-example");
-                        break;
-                    }
-                    let model = ctx.solver.get_model().unwrap();
-                    //`Vec<(std::string::String, Vec<(std::string::String, std::string::String)>, std::string::String, std::string::String)>`
-                    /// "s", [], "(_ BitVec 4)", "#xd"
-                    /// "t", [], "(_ BitVec 4)", "#x5"
-                    /// "min", [], "(_ BitVec 4)", "(bvnot (bvlshr (bvnot #x0) #x1))" ??
-                    /// "max", [], "(_ BitVec 4)", "(bvnot (bvnot (bvlshr (bvnot #x0) #x1)))" ??
+//             // Get counter-example TODO: refactor into a function
+//             parse_constraints(&mut ctx);
+//             let result = ctx.solver.check_sat();
+//             let mut cex = Vec::new();
+//             match result {
+//                 Ok(res) => {
+//                     //println!("ok");
+//                     if !res{
+//                         println!("No counter-example");
+//                         break;
+//                     }
+//                     let model = ctx.solver.get_model().unwrap();
+//                     //`Vec<(std::string::String, Vec<(std::string::String, std::string::String)>, std::string::String, std::string::String)>`
+//                     /// "s", [], "(_ BitVec 4)", "#xd"
+//                     /// "t", [], "(_ BitVec 4)", "#x5"
+//                     /// "min", [], "(_ BitVec 4)", "(bvnot (bvlshr (bvnot #x0) #x1))" ??
+//                     /// "max", [], "(_ BitVec 4)", "(bvnot (bvnot (bvlshr (bvnot #x0) #x1)))" ??
 
-                    println!("Counter-example:");
-                    let range = ctx.variables.len();
-                    for res in &model.to_vec()[..range] {
-                        cex.push((res.0.to_string(), res.2.to_string(), res.3.to_string()));
-                        println!("{} : {} -> {}", res.0, res.2, res.3);
-                    }
-                    list_cex.push(cex);
-                    ctx.solver.reset();
-                },
-                Err(e) => {
-                    println!("error {}", e);
-                }
-            }
-        }
-        println!("End");
+//                     println!("Counter-example:");
+//                     let range = ctx.variables.len();
+//                     for res in &model.to_vec()[..range] {
+//                         cex.push((res.0.to_string(), res.2.to_string(), res.3.to_string()));
+//                         println!("{} : {} -> {}", res.0, res.2, res.3);
+//                     }
+//                     list_cex.push(cex);
+//                     ctx.solver.reset();
+//                 },
+//                 Err(e) => {
+//                     println!("error {}", e);
+//                 }
+//             }
+//         }
+//         println!("End");
 
-    }
+//     }
 
-    //let stream = CommandStream::new(&data.as_slice()[..], concrete::SyntaxBuilder, Some("".to_string()));
-    //let commands = stream.collect::<Result<Vec<_>, _>>().unwrap();
-    println!("{}", "hello");
+//     //let stream = CommandStream::new(&data.as_slice()[..], concrete::SyntaxBuilder, Some("".to_string()));
+//     //let commands = stream.collect::<Result<Vec<_>, _>>().unwrap();
+//     println!("{}", "hello");
 
-}
+// }
