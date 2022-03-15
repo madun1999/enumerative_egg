@@ -1,6 +1,6 @@
 use std::borrow::{Borrow, BorrowMut};
 use std::collections::BTreeSet;
-use egg::{Id, LanguageChildren};
+use egg::{Id, LanguageChildren, RecExpr};
 use regex::{Match, Regex};
 //use z3::ast::{Ast, Real};
 //use z3::{SatResult, Solver, Config, Context};
@@ -16,6 +16,7 @@ use std::path::Path;
 use smt2parser::{CommandStream, concrete, visitors};
 use lexpr;
 use lexpr::parse::{KeywordSyntax, Options, Read, SliceRead};
+use lexpr::parse::TSymbol::Default;
 use lexpr::Value;
 use rsmt2::prelude::{Expr2Smt, Sym2Smt};
 use smt2parser::concrete::{parse_simple_attribute_value};
@@ -23,6 +24,7 @@ use smt2parser::concrete::Sort::Simple;
 use symbolic_expressions::Sexp;
 
 use crate::grammar::{Grammar, GEnumerator};
+use crate::language_bv::BVLanguage;
 
 mod grammar;
 mod language_bv;
@@ -81,7 +83,7 @@ pub struct Context {
     synth_funcs: Vec<Func>,
     /// Solution
     solved: bool,
-    solution: Sexp
+    solution: String
 }
 
 impl Debug for Context {
@@ -101,11 +103,11 @@ impl Context {
             solver: solver,
             lexpr_list : vec![],
             variables: vec![],
-            var_set: Default::default(),
+            var_set: BTreeSet::new(),
             constraints: vec![],
             synth_funcs: vec![],
             solved: false,
-            solution: Default::default()
+            solution: "".to_string()
         }
     }
 }
@@ -554,24 +556,34 @@ fn run() {
             // run until there is a class that might be correct
             let mut bank = g_enum.one_iter();
             let mut quick_correct: Option<Id> = None;
+            let mut count = 0;
+            let mut candidate: RecExpr<BVLanguage> = RecExpr::default();
             while quick_correct.is_none(){
                 for (id, sexp) in g_enum.one_per_class() { // where to use sexp?
                     //println!("{}", sexp.to_string());
                     ctx.solver.define_fun(func.symbol.clone(), func.params.clone(), func.return_type.clone(), sexp.to_string());
                     parse_define(&mut ctx);
                     if quick_verify(&mut ctx, &list_cex){
+                        //println!("sexp: {}", sexp.to_string());
                         quick_correct = Some(id);
+                        candidate = sexp.clone();
                         ctx.solver.reset();
                         break;
                     }
                     ctx.solver.reset();
                 }
+                count += 1;
+                println!("{}", count);
                 bank = g_enum.one_iter();
             }
 
-            let candidates = g_enum.sexp_vec_id(quick_correct.unwrap());
-            //println!("{}", candidates.len());
-            for candidate in candidates {
+            //let candidates = g_enum.sexp_vec_id(quick_correct.unwrap());
+            println!("quick correct {}", quick_correct.unwrap().len());
+            println!("CEX {}", list_cex.len());
+            //if candidates.len()==0{
+            //    println!("eclass: {:?}", g_enum.bank[quick_correct.unwrap()])
+            //}
+            //for candidate in candidates {
                 println!("Candidate: {}", candidate.to_string());
                 // println!("{:?}", ctx.variables);
                 // TODO: quick verify on counter example set
@@ -590,7 +602,7 @@ fn run() {
                         //println!("ok");
                         if !res{
                             ctx.solved = true;
-                            ctx.solution = candidate;
+                            ctx.solution = candidate.to_string();
                             println!("No counter-example");
                             break;
                         }
@@ -614,19 +626,21 @@ fn run() {
                         g_enum.add_pts_vec(&cex);
                         list_cex.push(cex);
                         ctx.solver.reset();
+                        //break;
                     },
                     Err(e) => {
                         println!("error {}", e);
                     }
                 }
                 
-            }
+            //}
             if ctx.solved{
                 break;
             }
             g_enum.reset_bank();
             
         }
+        println!("Solution: {}", ctx.solution);
         println!("End");
 
     }
