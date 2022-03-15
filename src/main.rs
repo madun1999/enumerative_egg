@@ -1,4 +1,5 @@
 use std::borrow::{Borrow, BorrowMut};
+use std::collections::BTreeSet;
 use egg::Id;
 use regex::{Match, Regex};
 //use z3::ast::{Ast, Real};
@@ -523,6 +524,8 @@ fn run() {
         // ctx.solver.define_fun(func.symbol.clone(), func.params.clone(), func.return_type.clone(), "#xF"); // what's this?
         // parse_define(&mut ctx);
         g_enum.reset_bank();
+        
+        
         loop {
             // reset bank
             
@@ -547,6 +550,7 @@ fn run() {
             let candidates = g_enum.sexp_vec_id(quick_correct.unwrap());
             for candidate in candidates {
                 println!("{}", candidate.to_string());
+                // println!("{:?}", ctx.variables);
                 // TODO: quick verify on counter example set
                 // if !quick_verify(&mut ctx, &list_cex){
                 //     ctx.solver.reset(); // reset needed because our function will be different.
@@ -575,10 +579,16 @@ fn run() {
 
                         println!("Counter-example:");
                         let range = ctx.variables.len();
+                        let var_set:BTreeSet<String> = BTreeSet::from_iter(ctx.variables.iter().map(|x|x.0.clone()));
+                        println!("{:?} {:?}",var_set, ctx.variables);
                         for res in &model.to_vec()[..range] {
-                            cex.push((res.0.to_string(), res.2.to_string(), res.3.to_string()));
-                            println!("{} : {} -> {}", res.0, res.2, res.3);
+                            if var_set.contains(&res.0) {
+                                cex.push((res.0.to_string(), res.2.to_string(), res.3.to_string()));
+                                println!("{} : {} -> {}", res.0, res.2, res.3);
+                            }
                         }
+                        // cex = cex.iter().filter(|x|var_set.contains(&x.0)).collect();
+                        g_enum.add_pts_vec(&cex);
                         list_cex.push(cex);
                         ctx.solver.reset();
                     },
@@ -586,9 +596,10 @@ fn run() {
                         println!("error {}", e);
                     }
                 }
+                
             }
-
             g_enum.reset_bank();
+            
         }
         println!("End");
 
