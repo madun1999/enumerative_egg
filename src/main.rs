@@ -570,7 +570,7 @@ fn run() {
             }
 
             let candidates = g_enum.sexp_vec_id(quick_correct.unwrap());
-            println!("{}", quick_correct.unwrap().len());
+            //println!("{}", candidates.len());
             for candidate in candidates {
                 println!("Candidate: {}", candidate.to_string());
                 // println!("{:?}", ctx.variables);
