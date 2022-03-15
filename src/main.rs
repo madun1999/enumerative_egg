@@ -1,6 +1,6 @@
 use std::borrow::{Borrow, BorrowMut};
 use std::collections::BTreeSet;
-use egg::Id;
+use egg::{Id, LanguageChildren};
 use regex::{Match, Regex};
 //use z3::ast::{Ast, Real};
 //use z3::{SatResult, Solver, Config, Context};
@@ -20,6 +20,7 @@ use lexpr::Value;
 use rsmt2::prelude::{Expr2Smt, Sym2Smt};
 use smt2parser::concrete::{parse_simple_attribute_value};
 use smt2parser::concrete::Sort::Simple;
+use symbolic_expressions::Sexp;
 
 use crate::grammar::{Grammar, GEnumerator};
 
@@ -77,7 +78,10 @@ pub struct Context {
     /// constraint list
     constraints: Vec<String>,
     /// function list
-    synth_funcs: Vec<Func>
+    synth_funcs: Vec<Func>,
+    /// Solution
+    solved: bool,
+    solution: Sexp
 }
 
 impl Debug for Context {
@@ -99,7 +103,9 @@ impl Context {
             variables: vec![],
             var_set: Default::default(),
             constraints: vec![],
-            synth_funcs: vec![]
+            synth_funcs: vec![],
+            solved: false,
+            solution: Default::default()
         }
     }
 }
@@ -514,7 +520,7 @@ fn main() {
 
 fn run() {
 
-    let paths = fs::read_dir("./benchmarks/lib/General_Track/bv-conditional-inverses/").unwrap();
+    let paths = fs::read_dir("./test/").unwrap(); // "./benchmarks/lib/General_Track/bv-conditional-inverses/"
 
     for path in paths {
         let mut ctx = parse_file_and_create_ctx(path.unwrap().path().to_str().unwrap());
@@ -550,7 +556,7 @@ fn run() {
             let mut quick_correct: Option<Id> = None;
             while quick_correct.is_none(){
                 for (id, sexp) in g_enum.one_per_class() { // where to use sexp?
-
+                    //println!("{}", sexp.to_string());
                     ctx.solver.define_fun(func.symbol.clone(), func.params.clone(), func.return_type.clone(), sexp.to_string());
                     parse_define(&mut ctx);
                     if quick_verify(&mut ctx, &list_cex){
@@ -564,8 +570,9 @@ fn run() {
             }
 
             let candidates = g_enum.sexp_vec_id(quick_correct.unwrap());
+            println!("{}", quick_correct.unwrap().len());
             for candidate in candidates {
-                println!("{}", candidate.to_string());
+                println!("Candidate: {}", candidate.to_string());
                 // println!("{:?}", ctx.variables);
                 // TODO: quick verify on counter example set
                 // if !quick_verify(&mut ctx, &list_cex){
@@ -582,6 +589,8 @@ fn run() {
                     Ok(res) => {
                         //println!("ok");
                         if !res{
+                            ctx.solved = true;
+                            ctx.solution = candidate;
                             println!("No counter-example");
                             break;
                         }
@@ -611,6 +620,9 @@ fn run() {
                     }
                 }
                 
+            }
+            if ctx.solved{
+                break;
             }
             g_enum.reset_bank();
             
