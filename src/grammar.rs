@@ -24,6 +24,8 @@ use crate::observation_folding_bv::ConstantFoldBV;
 use lexpr;
 use lexpr::parse::{KeywordSyntax, Options, Read, SliceRead};
 use lexpr::Value;
+use tokio::time::Instant;
+use crate::TIMEOUT;
 
 type Assignment<V> = BTreeMap<String, V>;
 
@@ -217,7 +219,7 @@ pub struct GEnumerator{ // TODO: Make it generic <L: From Op,V:Something> , BV f
 impl GEnumerator {
 
     // pub fn one_iter(&mut self) -> &EGraph<BVLanguage, ConstantFoldBV> {
-    pub fn one_iter(&mut self) {
+    pub fn one_iter(&mut self, start: &Instant) {
         // If not started, put all terminals in the bank
         if !self.started_enumeration {
             self.started_enumeration = true;
@@ -268,7 +270,16 @@ impl GEnumerator {
 
             
             // Add all new enodes to bank
+            let mut count = 1;
             for enode in new_enodes {
+                count += 1;
+                if count % 5000 == 0 {
+                    let elapsed = start.elapsed();
+                    //println!("elapsed: {}", elapsed.as_secs());
+                    if elapsed.as_secs() > TIMEOUT{
+                        return;
+                    }
+                }
                 // println!("{:?}", enode);
                 self.bank.add(enode);
             }

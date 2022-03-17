@@ -58,7 +58,7 @@ pub fn test_enumerator_sexpr(sexpr: &Vec<Value>) {
     println!();
 
     for i in 0..10 {
-        g_enum.one_iter();
+        //g_enum.one_iter();
         let bank = &g_enum.bank;
         println!();
         println!("Generated dot file! My egraph dot file: target/foo{}.svg", i);
@@ -122,7 +122,7 @@ pub fn test_enumerator() {
     println!();
 
     for i in 0..6 { // max 6 is enough
-        g_enum.one_iter();
+        //g_enum.one_iter();
         let bank = &g_enum.bank;
         println!();
         println!("Generated dot file! My egraph dot file: target/foo{}.svg", i);

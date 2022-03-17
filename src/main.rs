@@ -8,12 +8,17 @@ use regex::{Match, Regex};
 use rsmt2::{Solver, SmtRes, Logic};
 use rsmt2::parse::{IdentParser, ModelParser, SmtParser, ValueParser};
 use std::fs::{DirEntry, File};
-use std::fs;
+use std::{fs, panic, thread};
+use futures::{future, stream};
+use futures::{StreamExt as _, FutureExt as _};
 use std::io::{self, BufRead};
+use std::io::Write;
 use std::ops::Index;
 use core::fmt::Debug;
 use std::collections::BTreeMap;
 use std::path::Path;
+use std::sync::mpsc;
+use std::time::Duration;
 use smt2parser::{CommandStream, concrete, visitors};
 use lexpr;
 use lexpr::parse::{KeywordSyntax, Options, Read, SliceRead};
@@ -24,11 +29,8 @@ use smt2parser::concrete::{parse_simple_attribute_value};
 use smt2parser::concrete::Sort::Simple;
 use symbolic_expressions::Sexp;
 
-use tokio::time::timeout;
-use tokio::sync::oneshot;
-
-use std::time::Duration;
-use tokio::task;
+use tokio::time::{Instant, timeout};
+use tokio::{task};
 
 use crate::grammar::{Grammar, GEnumerator};
 use crate::language_bv::BVLanguage;
@@ -38,6 +40,8 @@ mod language_bv;
 mod observation_folding_bv;
 mod language_bv_test;
 mod g_enumerator_test;
+
+static TIMEOUT: u64 = 100;
 
 pub fn write_str<W: io::Write>(w: &mut W, s: &str) -> SmtRes<()> {
     w.write_all(s.as_bytes())?;
@@ -518,20 +522,21 @@ fn quick_verify(ctx: &mut Context, list_cex: &Vec<Vec<(String, String, String)>>
 //         }
 //     }
 // }
-
-#[tokio::main]
-async fn main() -> Result<(), String> {
+//(worker_threads = 8)
+//#[tokio::main(worker_threads = 8)]
+fn main() -> Result<(), String> {
     let op = run();
     //language_bv::test_bvliteral();
     // language_bv_test::test_observation_folding();
     // language_bv_test::test_enumerator();
     // g_enumerator_test::test_enumerator();
     // test_quick_verify();
-    op.await;
     Ok(())
 }
 
-async fn run_once(path: DirEntry) -> Result<bool, String>{
+fn run_once(path: DirEntry) -> Result<(String, u128, u32, String), String>{
+    let start = Instant::now();
+
     let path_unwrapped = path.path();
     let filename = path_unwrapped.to_str().unwrap();
     println!("Running file {}", &filename);
@@ -542,7 +547,7 @@ async fn run_once(path: DirEntry) -> Result<bool, String>{
 
     let mut list_cex: Vec<Vec<(String, String, String)>> = Vec::new();
     let mut candidates: Vec<(String, String, String)> = Vec::new(); // TODO: to egg
-    if ctx.synth_funcs.get(0).is_none() {return Ok(false);}
+    if ctx.synth_funcs.get(0).is_none() {return Err("no function".to_string());}
     let mut g = Grammar::default();
     let synth_funcs = ctx.synth_funcs.clone();
     let func = synth_funcs.get(0).unwrap();
@@ -559,6 +564,7 @@ async fn run_once(path: DirEntry) -> Result<bool, String>{
     // parse_define(&mut ctx);
     g_enum.reset_bank();
 
+    let mut count : u32 = 0;
 
     loop {
         // reset bank
@@ -566,10 +572,16 @@ async fn run_once(path: DirEntry) -> Result<bool, String>{
         // run until there is a class that might be correct
         // g_enum.one_iter();
         let mut quick_correct: Option<Id> = None;
-        let mut count = 0;
+        count = 0;
         let mut candidate: RecExpr<BVLanguage> = RecExpr::default();
         while quick_correct.is_none(){
-            g_enum.one_iter();
+
+            let elapsed = start.elapsed();
+            //println!("elapsed: {}", elapsed.as_secs());
+            if elapsed.as_secs() > TIMEOUT{
+                return Err(format!("timeout: {}", elapsed.as_millis()));
+            }
+            g_enum.one_iter(&start);
             for (id, sexp) in g_enum.one_per_class() {
                 //println!("{}", sexp.to_string());
                 // let correct = "(bvsub t s)".to_string();
@@ -584,6 +596,10 @@ async fn run_once(path: DirEntry) -> Result<bool, String>{
                     break;
                 }
                 ctx.solver.reset();
+                let elapsed = start.elapsed();
+                if elapsed.as_secs() > TIMEOUT{
+                    return Err(format!("timeout: {}", elapsed.as_millis()));
+                }
             }
             count += 1;
             println!("Quick check iteration: {}", count);
@@ -664,28 +680,111 @@ async fn run_once(path: DirEntry) -> Result<bool, String>{
     //println!("End of {}\n", count);
     //count += 1;
     // return;
-    Ok(true)
+
+    let elapsed = start.elapsed();
+    if elapsed.as_secs() > TIMEOUT{
+        return Err(format!("timeout: {}", elapsed.as_millis()));
+    }
+    //println!("elapsed: {}", elapsed.as_secs());
+    Ok((filename.to_string(), elapsed.as_millis(), count, ctx.solution))
 }
 
 
-async fn run(){
+fn run(){
 
-    let paths = fs::read_dir("./test/individual").unwrap(); // "./benchmarks/lib/General_Track/bv-conditional-inverses/"
-    let mut count = 0;
+    let paths = fs::read_dir("./test").unwrap(); // "./benchmarks/lib/General_Track/bv-conditional-inverses/"
+    let mut fail_count = 0;
+    let mut success_count = 0;
+    let mut solutions = vec![];
+
+    let path = "results.txt";
+    let mut output = File::create(path).unwrap();
     for path in paths {
-        let task = task::spawn(run_once(path.unwrap()));
+        // if fail_count > 10{
+        //     break;
+        // }
+
+        let ret = run_once(path.unwrap());
+        match ret {
+            Ok(solution) => {
+                success_count += 1;
+                println!("Solution: {:?}", solution);
+                writeln!(output, "{:?}", solution);
+                solutions.push(solution);
+            },
+            Err(msg) => {
+                println!("{}", msg);
+                fail_count += 1;
+            }
+        }
+
+
+        println!("success_count {}", success_count);
+        println!("fail_count {}", fail_count);
 
         // Wrap the future with a `Timeout` set to expire in 10 milliseconds.
-        if let Err(_) = timeout(Duration::from_secs(10), task).await {
-            println!("did not receive value within 10 seconds");
-        }
+
+        // let (sender, receiver) = mpsc::channel();
+        // let t = thread::spawn(move || {
+        //     match sender.send(run_once(path.unwrap())) {
+        //         Ok(()) => {
+        //             success_count += 1;
+        //         }, // everything good
+        //         Err(_) => {
+        //
+        //             println!("did not receive value within 100 seconds");
+        //             fail_count += 1;
+        //         }, // we have been released, don't panic
+        //     }
+        // });
+
+        // thread::sleep(Duration::from_secs(1));
+        // receiver.recv_timeout(Duration::from_secs(1));
+        // t.join().unwrap();
+        //let ret = timeout(Duration::from_secs(1), task).await;
 
     }
 
+    //
+    // while let Some(task) = task_list.next().await {
+    //     // let ret = task.unwrap();
+    //     // match ret {
+    //     //     Ok(solution) => {
+    //     //         success_count += 1;
+    //     //         println!("Solution: {:?}", solution);
+    //     //         writeln!(output, "{:?}", solution);
+    //     //         solutions.push(solution);
+    //     //     },
+    //     //     Err(msg) => {
+    //     //         println!("{}", msg);
+    //     //         fail_count += 1;
+    //     //     }
+    //     // }
+    //     //
+    //     //
+    //     // println!("success_count {}", success_count);
+    //     // println!("fail_count {}", fail_count);
+    // }
+
+    // loop {
+    //     match task_list.next().await {
+    //         Some(result) => {
+    //             println!("    finished future [{}]", result);
+    //             if cnt < 20 {
+    //                 workers.push( random_sleep(cnt) );
+    //             }
+    //         },
+    //         None => {
+    //             println!("Done!");
+    //             break;
+    //         }
+    //     }
+    // }
+
     //let stream = CommandStream::new(&data.as_slice()[..], concrete::SyntaxBuilder, Some("".to_string()));
     //let commands = stream.collect::<Result<Vec<_>, _>>().unwrap();
-    println!("{}", "hello");
-
+    writeln!(output, "{}, {}", success_count, fail_count);
+    println!("End");
 }
 
 
