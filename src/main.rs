@@ -581,6 +581,7 @@ fn run_once(filename: &str, KEEP_AST_COUNT: usize) -> Result<(String, u128, u32,
                 return Err(format!("timeout: {}", elapsed.as_millis()));
             }
             g_enum.one_iter(&start);
+            // println!("{:?}", g_enum);
             for (id, _sexp_size, sexp) in g_enum.one_per_new_class() {
                 //println!("{}", sexp.to_string());
                 // let correct = "(bvsub t s)".to_string();
@@ -679,7 +680,7 @@ fn run_once(filename: &str, KEEP_AST_COUNT: usize) -> Result<(String, u128, u32,
             break;
         }
         g_enum.reset_bank();
-        println!();
+        // println!();
     }
     println!("Solution: {}", ctx.solution);
     //println!("End of {}\n", count);
@@ -696,7 +697,7 @@ fn run_once(filename: &str, KEEP_AST_COUNT: usize) -> Result<(String, u128, u32,
 
 
 fn run(){
-    for KEEP_AST_COUNT in 0.. {
+    for KEEP_AST_COUNT in 1.. {
         let paths = fs::read_dir("./test").unwrap(); // "./benchmarks/lib/General_Track/bv-conditional-inverses/"
         let mut fail_count = 0;
         let mut success_count = 0;
@@ -729,7 +730,7 @@ fn run(){
 
             println!("success_count {}", success_count);
             println!("fail_count {}", fail_count);
-
+            println!();
             // Wrap the future with a `Timeout` set to expire in 10 milliseconds.
 
             // let (sender, receiver) = mpsc::channel();
@@ -793,6 +794,7 @@ fn run(){
         //let commands = stream.collect::<Result<Vec<_>, _>>().unwrap();
         writeln!(output, "{}, {}", success_count, fail_count);
         println!("End with KEEP_AST_COUNT {}", KEEP_AST_COUNT);
+        println!("");
     }
 }
 

@@ -1,0 +1,736 @@
+Running file ./test/find_inv_bvsge_bvadd_4bit.sl
+Parsing ./test/find_inv_bvsge_bvadd_4bit.sl
+(synth-fun inv ((s (_ BitVec 4)) (t (_ BitVec 4))) (_ BitVec 4) ((Start (_ BitVec 4))) ((Start (_ BitVec 4) (s t #x0 #x8 #x7 (bvneg Start) (bvnot Start) (bvadd Start Start) (bvsub Start Start) (bvand Start Start) (bvlshr Start Start) (bvor Start Start) (bvshl Start Start)))))
+{"s", "t"} [("s", "(_ BitVec 4)"), ("t", "(_ BitVec 4)")]
+Quick check iteration: 1
+quick correct id: 5
+number of counter examples present: 0
+Candidate: #b0000
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #xe
+t : (_ BitVec 4) -> #x0
+Quick check iteration: 1
+quick correct id: 5
+number of counter examples present: 1
+Candidate: #b1000
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x6
+t : (_ BitVec 4) -> #x0
+Quick check iteration: 1
+Quick check iteration: 2
+quick correct id: 9
+number of counter examples present: 2
+Candidate: (bvneg s)
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+t : (_ BitVec 4) -> #x4
+s : (_ BitVec 4) -> #x0
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+quick correct id: 58
+number of counter examples present: 3
+Candidate: (bvadd #b0111 s)
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x4
+t : (_ BitVec 4) -> #x0
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+quick correct id: 89
+number of counter examples present: 4
+Candidate: (bvsub #b0111 s)
+(not (=> (SC s t) (l s t))) 
+No counter-example
+Solution: (bvsub #b0111 s)
+Solution: ("./test/find_inv_bvsge_bvadd_4bit.sl", 2293, 3, "(bvsub #b0111 s)")
+success_count 1
+fail_count 0
+
+Running file ./test/find_inv_bvsge_bvand_4bit.sl
+Parsing ./test/find_inv_bvsge_bvand_4bit.sl
+(synth-fun inv ((s (_ BitVec 4)) (t (_ BitVec 4))) (_ BitVec 4) ((Start (_ BitVec 4))) ((Start (_ BitVec 4) (s t #x0 #x8 #x7 (bvneg Start) (bvnot Start) (bvadd Start Start) (bvsub Start Start) (bvand Start Start) (bvlshr Start Start) (bvor Start Start) (bvshl Start Start)))))
+{"s", "t"} [("s", "(_ BitVec 4)"), ("t", "(_ BitVec 4)")]
+Quick check iteration: 1
+quick correct id: 5
+number of counter examples present: 0
+Candidate: #b0000
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+t : (_ BitVec 4) -> #x5
+s : (_ BitVec 4) -> #x5
+Quick check iteration: 1
+quick correct id: 2
+number of counter examples present: 1
+Candidate: s
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+t : (_ BitVec 4) -> #xb
+s : (_ BitVec 4) -> #x9
+Quick check iteration: 1
+quick correct id: 8
+number of counter examples present: 2
+Candidate: #b0111
+(not (=> (SC s t) (l s t))) 
+No counter-example
+Solution: #b0111
+Solution: ("./test/find_inv_bvsge_bvand_4bit.sl", 454, 1, "#b0111")
+success_count 2
+fail_count 0
+
+Running file ./test/find_inv_bvsge_bvashr0_4bit.sl
+Parsing ./test/find_inv_bvsge_bvashr0_4bit.sl
+(synth-fun inv ((s (_ BitVec 4)) (t (_ BitVec 4))) (_ BitVec 4) ((Start (_ BitVec 4))) ((Start (_ BitVec 4) (s t #x0 #x8 #x7 (bvneg Start) (bvnot Start) (bvadd Start Start) (bvsub Start Start) (bvand Start Start) (bvlshr Start Start) (bvor Start Start) (bvshl Start Start)))))
+{"s", "t"} [("s", "(_ BitVec 4)"), ("t", "(_ BitVec 4)")]
+Quick check iteration: 1
+quick correct id: 5
+number of counter examples present: 0
+Candidate: #b0000
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x0
+t : (_ BitVec 4) -> #x1
+Quick check iteration: 1
+quick correct id: 2
+number of counter examples present: 1
+Candidate: t
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x1
+t : (_ BitVec 4) -> #x3
+Quick check iteration: 1
+quick correct id: 8
+number of counter examples present: 2
+Candidate: #b0111
+(not (=> (SC s t) (l s t))) 
+No counter-example
+Solution: #b0111
+Solution: ("./test/find_inv_bvsge_bvashr0_4bit.sl", 426, 1, "#b0111")
+success_count 3
+fail_count 0
+
+Running file ./test/find_inv_bvsge_bvashr1_4bit.sl
+Parsing ./test/find_inv_bvsge_bvashr1_4bit.sl
+(synth-fun inv ((s (_ BitVec 4)) (t (_ BitVec 4))) (_ BitVec 4) ((Start (_ BitVec 4))) ((Start (_ BitVec 4) (s t #x0 #x8 #x7 (bvneg Start) (bvnot Start) (bvadd Start Start) (bvsub Start Start) (bvand Start Start) (bvlshr Start Start) (bvor Start Start) (bvshl Start Start)))))
+{"s", "t"} [("s", "(_ BitVec 4)"), ("t", "(_ BitVec 4)")]
+Quick check iteration: 1
+quick correct id: 5
+number of counter examples present: 0
+Candidate: #b0000
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x8
+t : (_ BitVec 4) -> #x9
+Quick check iteration: 1
+quick correct id: 2
+number of counter examples present: 1
+Candidate: t
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x7
+t : (_ BitVec 4) -> #x3
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+quick correct id: 89
+number of counter examples present: 2
+Candidate: (bvsub #b0111 s)
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x6
+t : (_ BitVec 4) -> #x4
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+quick correct id: 137
+number of counter examples present: 3
+Candidate: (bvand #b1000 s)
+(not (=> (SC s t) (l s t))) 
+No counter-example
+Solution: (bvand #b1000 s)
+Solution: ("./test/find_inv_bvsge_bvashr1_4bit.sl", 3313, 3, "(bvand #b1000 s)")
+success_count 4
+fail_count 0
+
+Running file ./test/find_inv_bvsge_bvlshr0_4bit.sl
+Parsing ./test/find_inv_bvsge_bvlshr0_4bit.sl
+(synth-fun inv ((s (_ BitVec 4)) (t (_ BitVec 4))) (_ BitVec 4) ((Start (_ BitVec 4))) ((Start (_ BitVec 4) (s t #x0 #x8 #x7 (bvneg Start) (bvnot Start) (bvadd Start Start) (bvsub Start Start) (bvand Start Start) (bvlshr Start Start) (bvor Start Start) (bvshl Start Start)))))
+{"s", "t"} [("s", "(_ BitVec 4)"), ("t", "(_ BitVec 4)")]
+Quick check iteration: 1
+quick correct id: 5
+number of counter examples present: 0
+Candidate: #b0000
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+t : (_ BitVec 4) -> #x1
+s : (_ BitVec 4) -> #x0
+Quick check iteration: 1
+quick correct id: 2
+number of counter examples present: 1
+Candidate: t
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+t : (_ BitVec 4) -> #x4
+s : (_ BitVec 4) -> #x1
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+quick correct id: 58
+number of counter examples present: 2
+Candidate: (bvadd #b0111 s)
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+t : (_ BitVec 4) -> #x3
+s : (_ BitVec 4) -> #x2
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+quick correct id: 210
+number of counter examples present: 3
+Candidate: (bvshl t s)
+(not (=> (SC s t) (l s t))) 
+No counter-example
+Solution: (bvshl t s)
+Solution: ("./test/find_inv_bvsge_bvlshr0_4bit.sl", 2023, 3, "(bvshl t s)")
+success_count 5
+fail_count 0
+
+Running file ./test/find_inv_bvsge_bvlshr1_4bit.sl
+Parsing ./test/find_inv_bvsge_bvlshr1_4bit.sl
+(synth-fun inv ((s (_ BitVec 4)) (t (_ BitVec 4))) (_ BitVec 4) ((Start (_ BitVec 4))) ((Start (_ BitVec 4) (s t #x0 #x8 #x7 (bvneg Start) (bvnot Start) (bvadd Start Start) (bvsub Start Start) (bvand Start Start) (bvlshr Start Start) (bvor Start Start) (bvshl Start Start)))))
+{"s", "t"} [("s", "(_ BitVec 4)"), ("t", "(_ BitVec 4)")]
+Quick check iteration: 1
+quick correct id: 5
+number of counter examples present: 0
+Candidate: #b0000
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #xe
+t : (_ BitVec 4) -> #x0
+Quick check iteration: 1
+quick correct id: 0
+number of counter examples present: 1
+Candidate: s
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+t : (_ BitVec 4) -> #x1
+s : (_ BitVec 4) -> #x6
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+quick correct id: 89
+number of counter examples present: 2
+Candidate: (bvsub #b0111 s)
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+t : (_ BitVec 4) -> #x4
+s : (_ BitVec 4) -> #x5
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+quick correct id: 220
+number of counter examples present: 3
+Candidate: (bvand #b1000 s)
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+t : (_ BitVec 4) -> #x1
+s : (_ BitVec 4) -> #xf
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+Quick check iteration: 4
+quick correct id: 727
+number of counter examples present: 4
+Candidate: (bvneg (bvshl #b0111 t))
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+t : (_ BitVec 4) -> #x1
+s : (_ BitVec 4) -> #x3
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+Quick check iteration: 4
+quick correct id: 554
+number of counter examples present: 5
+Candidate: (bvlshr #b0111 (bvneg s))
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+t : (_ BitVec 4) -> #x0
+s : (_ BitVec 4) -> #xc
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+Quick check iteration: 4
+Quick check iteration: 5
+quick correct id: 2818
+number of counter examples present: 6
+Candidate: (bvlshr #b0111 (bvadd t t))
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+t : (_ BitVec 4) -> #x4
+s : (_ BitVec 4) -> #xe
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+Quick check iteration: 4
+Quick check iteration: 5
+timeout: 101010
+success_count 5
+fail_count 1
+
+Running file ./test/find_inv_bvsge_bvmul_4bit.sl
+Parsing ./test/find_inv_bvsge_bvmul_4bit.sl
+(synth-fun inv ((s (_ BitVec 4)) (t (_ BitVec 4))) (_ BitVec 4) ((Start (_ BitVec 4))) ((Start (_ BitVec 4) (s t #x0 #x8 #x7 (bvneg Start) (bvnot Start) (bvadd Start Start) (bvsub Start Start) (bvand Start Start) (bvlshr Start Start) (bvor Start Start) (bvshl Start Start)))))
+{"s", "t"} [("s", "(_ BitVec 4)"), ("t", "(_ BitVec 4)")]
+Quick check iteration: 1
+quick correct id: 5
+number of counter examples present: 0
+Candidate: #b0000
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x2
+t : (_ BitVec 4) -> #x2
+Quick check iteration: 1
+quick correct id: 2
+number of counter examples present: 1
+Candidate: s
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #xb
+t : (_ BitVec 4) -> #x0
+Quick check iteration: 1
+quick correct id: 2
+number of counter examples present: 2
+Candidate: t
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #xe
+t : (_ BitVec 4) -> #x3
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+quick correct id: 58
+number of counter examples present: 3
+Candidate: (bvadd #b0111 s)
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #xa
+t : (_ BitVec 4) -> #x0
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+quick correct id: 83
+number of counter examples present: 4
+Candidate: (bvadd #b1000 s)
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #xf
+t : (_ BitVec 4) -> #x0
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+Quick check iteration: 4
+Quick check iteration: 5
+quick correct id: 3560
+number of counter examples present: 5
+Candidate: (bvshl t (bvlshr s t))
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #xf
+t : (_ BitVec 4) -> #x2
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+Quick check iteration: 4
+Quick check iteration: 5
+quick correct id: 1618
+number of counter examples present: 6
+Candidate: (bvsub (bvshl #b0111 s) t)
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x5
+t : (_ BitVec 4) -> #x1
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+Quick check iteration: 4
+Quick check iteration: 5
+Quick check iteration: 6
+quick correct id: 5413
+number of counter examples present: 7
+Candidate: (bvnot (bvlshr #b1000 (bvnot (bvneg t))))
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x3
+t : (_ BitVec 4) -> #x0
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+Quick check iteration: 4
+timeout: 101038
+success_count 5
+fail_count 2
+
+Running file ./test/find_inv_bvsge_bvneg_4bit.sl
+Parsing ./test/find_inv_bvsge_bvneg_4bit.sl
+(synth-fun inv ((s (_ BitVec 4)) (t (_ BitVec 4))) (_ BitVec 4) ((Start (_ BitVec 4))) ((Start (_ BitVec 4) (s t #x0 #x8 #x7 (bvneg Start) (bvnot Start) (bvadd Start Start) (bvsub Start Start) (bvand Start Start) (bvlshr Start Start) (bvor Start Start) (bvshl Start Start)))))
+{"s", "t"} [("s", "(_ BitVec 4)"), ("t", "(_ BitVec 4)")]
+Quick check iteration: 1
+quick correct id: 5
+number of counter examples present: 0
+Candidate: #b0000
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+t : (_ BitVec 4) -> #x4
+s : (_ BitVec 4) -> #x0
+Quick check iteration: 1
+Quick check iteration: 2
+quick correct id: 16
+number of counter examples present: 1
+Candidate: (bvnot t)
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+t : (_ BitVec 4) -> #x7
+s : (_ BitVec 4) -> #x0
+Quick check iteration: 1
+Quick check iteration: 2
+quick correct id: 10
+number of counter examples present: 2
+Candidate: (bvneg t)
+(not (=> (SC s t) (l s t))) 
+No counter-example
+Solution: (bvneg t)
+Solution: ("./test/find_inv_bvsge_bvneg_4bit.sl", 726, 2, "(bvneg t)")
+success_count 6
+fail_count 2
+
+Running file ./test/find_inv_bvsge_bvnot_4bit.sl
+Parsing ./test/find_inv_bvsge_bvnot_4bit.sl
+(synth-fun inv ((s (_ BitVec 4)) (t (_ BitVec 4))) (_ BitVec 4) ((Start (_ BitVec 4))) ((Start (_ BitVec 4) (s t #x0 #x8 #x7 (bvneg Start) (bvnot Start) (bvadd Start Start) (bvsub Start Start) (bvand Start Start) (bvlshr Start Start) (bvor Start Start) (bvshl Start Start)))))
+{"s", "t"} [("s", "(_ BitVec 4)"), ("t", "(_ BitVec 4)")]
+Quick check iteration: 1
+quick correct id: 5
+number of counter examples present: 0
+Candidate: #b0000
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+t : (_ BitVec 4) -> #x0
+s : (_ BitVec 4) -> #x0
+Quick check iteration: 1
+quick correct id: 4
+number of counter examples present: 1
+Candidate: #b1000
+(not (=> (SC s t) (l s t))) 
+No counter-example
+Solution: #b1000
+Solution: ("./test/find_inv_bvsge_bvnot_4bit.sl", 195, 1, "#b1000")
+success_count 7
+fail_count 2
+
+Running file ./test/find_inv_bvsge_bvor_4bit.sl
+Parsing ./test/find_inv_bvsge_bvor_4bit.sl
+(synth-fun inv ((s (_ BitVec 4)) (t (_ BitVec 4))) (_ BitVec 4) ((Start (_ BitVec 4))) ((Start (_ BitVec 4) (s t #x0 #x8 #x7 (bvneg Start) (bvnot Start) (bvadd Start Start) (bvsub Start Start) (bvand Start Start) (bvlshr Start Start) (bvor Start Start) (bvshl Start Start)))))
+{"s", "t"} [("s", "(_ BitVec 4)"), ("t", "(_ BitVec 4)")]
+Quick check iteration: 1
+quick correct id: 5
+number of counter examples present: 0
+Candidate: #b0000
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+t : (_ BitVec 4) -> #x1
+s : (_ BitVec 4) -> #x0
+Quick check iteration: 1
+quick correct id: 2
+number of counter examples present: 1
+Candidate: t
+(not (=> (SC s t) (l s t))) 
+No counter-example
+Solution: t
+Solution: ("./test/find_inv_bvsge_bvor_4bit.sl", 245, 1, "t")
+success_count 8
+fail_count 2
+
+Running file ./test/find_inv_bvsge_bvshl0_4bit.sl
+Parsing ./test/find_inv_bvsge_bvshl0_4bit.sl
+(synth-fun inv ((s (_ BitVec 4)) (t (_ BitVec 4))) (_ BitVec 4) ((Start (_ BitVec 4))) ((Start (_ BitVec 4) (s t #x0 #x8 #x7 (bvneg Start) (bvnot Start) (bvadd Start Start) (bvsub Start Start) (bvand Start Start) (bvlshr Start Start) (bvor Start Start) (bvshl Start Start)))))
+{"s", "t"} [("s", "(_ BitVec 4)"), ("t", "(_ BitVec 4)")]
+Quick check iteration: 1
+quick correct id: 5
+number of counter examples present: 0
+Candidate: #b0000
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x0
+t : (_ BitVec 4) -> #x1
+Quick check iteration: 1
+quick correct id: 2
+number of counter examples present: 1
+Candidate: t
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x2
+t : (_ BitVec 4) -> #x4
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+quick correct id: 58
+number of counter examples present: 2
+Candidate: (bvadd #b0111 s)
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x1
+t : (_ BitVec 4) -> #x1
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+quick correct id: 106
+number of counter examples present: 3
+Candidate: (bvneg (bvnot #b0000))
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x0
+t : (_ BitVec 4) -> #x2
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+quick correct id: 30
+number of counter examples present: 4
+Candidate: (bvneg (bvnot t))
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x1
+t : (_ BitVec 4) -> #xb
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+quick correct id: 148
+number of counter examples present: 5
+Candidate: (bvlshr #b0111 s)
+(not (=> (SC s t) (l s t))) 
+No counter-example
+Solution: (bvlshr #b0111 s)
+Solution: ("./test/find_inv_bvsge_bvshl0_4bit.sl", 6468, 3, "(bvlshr #b0111 s)")
+success_count 9
+fail_count 2
+
+Running file ./test/find_inv_bvsge_bvshl1_4bit.sl
+Parsing ./test/find_inv_bvsge_bvshl1_4bit.sl
+(synth-fun inv ((s (_ BitVec 4)) (t (_ BitVec 4))) (_ BitVec 4) ((Start (_ BitVec 4))) ((Start (_ BitVec 4) (s t #x0 #x8 #x7 (bvneg Start) (bvnot Start) (bvadd Start Start) (bvsub Start Start) (bvand Start Start) (bvlshr Start Start) (bvor Start Start) (bvshl Start Start)))))
+{"s", "t"} [("s", "(_ BitVec 4)"), ("t", "(_ BitVec 4)")]
+Quick check iteration: 1
+quick correct id: 5
+number of counter examples present: 0
+Candidate: #b0000
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #xe
+t : (_ BitVec 4) -> #x0
+Quick check iteration: 1
+quick correct id: 0
+number of counter examples present: 1
+Candidate: s
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x1
+t : (_ BitVec 4) -> #x4
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+quick correct id: 44
+number of counter examples present: 2
+Candidate: (bvadd s s)
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x5
+t : (_ BitVec 4) -> #x1
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+Quick check iteration: 4
+Quick check iteration: 5
+quick correct id: 1921
+number of counter examples present: 3
+Candidate: (bvsub #b0111 (bvor s t))
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x6
+t : (_ BitVec 4) -> #x0
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+Quick check iteration: 4
+Quick check iteration: 5
+quick correct id: 2436
+number of counter examples present: 4
+Candidate: (bvand #b0111 (bvadd s s))
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x3
+t : (_ BitVec 4) -> #x2
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+Quick check iteration: 4
+Quick check iteration: 5
+timeout: 101039
+success_count 9
+fail_count 3
+
+Running file ./test/find_inv_bvsge_bvudiv0_4bit.sl
+Parsing ./test/find_inv_bvsge_bvudiv0_4bit.sl
+(synth-fun inv ((s (_ BitVec 4)) (t (_ BitVec 4))) (_ BitVec 4) ((Start (_ BitVec 4))) ((Start (_ BitVec 4) (s t #x0 #x8 #x7 (bvneg Start) (bvnot Start) (bvadd Start Start) (bvsub Start Start) (bvand Start Start) (bvlshr Start Start) (bvor Start Start) (bvshl Start Start)))))
+{"s", "t"} [("s", "(_ BitVec 4)"), ("t", "(_ BitVec 4)")]
+Quick check iteration: 1
+quick correct id: 5
+number of counter examples present: 0
+Candidate: #b0000
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x2
+t : (_ BitVec 4) -> #x1
+Quick check iteration: 1
+quick correct id: 0
+number of counter examples present: 1
+Candidate: s
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x6
+t : (_ BitVec 4) -> #x2
+Quick check iteration: 1
+Quick check iteration: 2
+quick correct id: 23
+number of counter examples present: 2
+Candidate: (bvnot #b0000)
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x1
+t : (_ BitVec 4) -> #x2
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+quick correct id: 44
+number of counter examples present: 3
+Candidate: (bvadd s s)
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x8
+t : (_ BitVec 4) -> #x1
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+Quick check iteration: 4
+Quick check iteration: 5
+quick correct id: 3292
+number of counter examples present: 4
+Candidate: (bvor (bvsub t s) t)
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x2
+t : (_ BitVec 4) -> #x3
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+Quick check iteration: 4
+Quick check iteration: 5
+quick correct id: 1794
+number of counter examples present: 5
+Candidate: (bvadd #b1000 (bvsub s t))
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x2
+t : (_ BitVec 4) -> #x4
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+Quick check iteration: 4
+Quick check iteration: 5
+quick correct id: 897
+number of counter examples present: 6
+Candidate: (bvnot (bvneg (bvshl t s)))
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x3
+t : (_ BitVec 4) -> #x5
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+Quick check iteration: 4
+Quick check iteration: 5
+quick correct id: 935
+number of counter examples present: 7
+Candidate: (bvnot (bvshl (bvnot s) s))
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+s : (_ BitVec 4) -> #x1
+t : (_ BitVec 4) -> #x5
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+Quick check iteration: 4
+Quick check iteration: 5
+timeout: 101040
+success_count 9
+fail_count 4
+
+Running file ./test/find_inv_bvsge_bvudiv1_4bit.sl
+Parsing ./test/find_inv_bvsge_bvudiv1_4bit.sl
+(synth-fun inv ((s (_ BitVec 4)) (t (_ BitVec 4))) (_ BitVec 4) ((Start (_ BitVec 4))) ((Start (_ BitVec 4) (s t #x0 #x8 #x7 (bvneg Start) (bvnot Start) (bvadd Start Start) (bvsub Start Start) (bvand Start Start) (bvlshr Start Start) (bvor Start Start) (bvshl Start Start)))))
+{"s", "t"} [("s", "(_ BitVec 4)"), ("t", "(_ BitVec 4)")]
+Quick check iteration: 1
+quick correct id: 5
+number of counter examples present: 0
+Candidate: #b0000
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+t : (_ BitVec 4) -> #x0
+s : (_ BitVec 4) -> #x6
+Quick check iteration: 1
+quick correct id: 0
+number of counter examples present: 1
+Candidate: s
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+t : (_ BitVec 4) -> #x5
+s : (_ BitVec 4) -> #xb
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+quick correct id: 58
+number of counter examples present: 2
+Candidate: (bvadd #b0111 s)
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+t : (_ BitVec 4) -> #x3
+s : (_ BitVec 4) -> #x4
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+Quick check iteration: 4
+Quick check iteration: 5
+quick correct id: 758
+number of counter examples present: 3
+Candidate: (bvneg (bvnot (bvand s t)))
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+t : (_ BitVec 4) -> #x0
+s : (_ BitVec 4) -> #xf
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+Quick check iteration: 4
+Quick check iteration: 5
+Quick check iteration: 6
+quick correct id: 8355
+number of counter examples present: 4
+Candidate: (bvlshr s (bvneg (bvadd #b0111 #b0111)))
+(not (=> (SC s t) (l s t))) 
+Counter-example:
+t : (_ BitVec 4) -> #x5
+s : (_ BitVec 4) -> #xd
+Quick check iteration: 1
+Quick check iteration: 2
+Quick check iteration: 3
+Quick check iteration: 4

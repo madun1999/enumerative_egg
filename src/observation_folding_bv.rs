@@ -161,6 +161,7 @@ type ASTByMinSize =BTreeSet<(usize, String)>;
     }
 
     fn merge_ast_by_minsize(a: &mut ASTByMinSize, b: ASTByMinSize, length: usize) -> egg::DidMerge {
+        // println!("Merging {:?} {:?}", a, b);
         let res : ASTByMinSize = a.union(&b).take(length).cloned().collect();
 
         // println!("Merged into {:?}", res);
@@ -181,6 +182,7 @@ impl Analysis<BVLanguage> for ConstantFoldBV {
     type Data = (Observations<BVValue>, ASTByMinSize);
 
     fn make(egraph: &egg::EGraph<BVLanguage, Self>, enode: &BVLanguage) -> Self::Data {
+        // println!("Make {:?}", enode);
         let x = |i: &Id| &egraph[*i].data.0;
         let esize = |i: &Id| &egraph[*i].data.1;
         let assignments = &egraph.analysis.assignments;

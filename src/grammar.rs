@@ -354,6 +354,7 @@ impl GEnumerator{
         // let cost_fn = NoObsAstSizeCostFn::default();
         // let extractor = Extractor::new(&self.bank, cost_fn);
         self.bank.classes().map(|x| {
+            // println!("{:?}", x.data);
             (x.id, x.data.1.iter().next().unwrap().0, x.data.1.iter().next().unwrap().1.clone())
         }).filter(|(_,size,_)| size >= &self.iteration).collect()
     } 
