@@ -1,0 +1,20 @@
+synthsize(G, spec) {
+  pts = []
+  g_enum = initialize_enumerator(G, pts)
+  do forever {
+      do {
+         eclasses <- g_enum.iter_once()  
+      } until quick_check(eclass.extract_one(), pts)
+
+      for eclass in eclasses if quick_check(eclass, pts)
+         for term in eclass.extract_multiple()
+            if verify(term, spec)
+                return term // Success
+            else
+                pts.add(cex_gen(term, spec)) // More Counter-example
+      g_enum.update_pts(pts)
+      g_enum.reset_egg()
+  }
+}
+ 
+ 

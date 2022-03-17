@@ -120,7 +120,7 @@ pub struct SimpleEnumerator {
     pts: Vec<Assignment<BVValue>>,
     true_obs: Vec<Observations<BVValue>>,
     grammar: Grammar,
-    pub bank: BTreeMap<Observations<BVValue>, String>, // one other observation value
+    pub bank: BTreeMap<Observations<BVValue>, BVLanguage>, // one other observation value
     started_enumeration: bool,
 }
 
@@ -134,8 +134,9 @@ pub struct SimpleEnumerator {
 //                     if !BV_OPS.contains(&terminal.0.as_str()) {
 //                         let sync_term= BVLanguage::from_op(&terminal.0, vec![]);
 //                         match sync_term {
-//                             Ok(BVLanguage::Bool(k)) => {
-//                                 self.bank.entry()
+//                             Ok(a) => {
+                                
+//                                 self.bank.add(a);
 //                             }
 //                             Err(e) => {
 //                                 println!("{:?}", e)
@@ -237,7 +238,7 @@ impl GEnumerator {
                    
                 }
             }
-            self.bank.rebuild();
+            // self.bank.rebuild();
             // println!("Generated dot file! My egraph dot file: target/foo{}.svg", self.bank.total_number_of_nodes());
             // self.bank.dot().to_svg(format!("target/rebuild_test{}.svg", self.bank.total_number_of_nodes())).unwrap();
             // println!("Rebuilding (init): {:?}",self.bank.rebuild());
@@ -274,7 +275,7 @@ impl GEnumerator {
             }
             // println!("273");
             // rebuild bank
-            self.bank.rebuild();
+            // self.bank.rebuild();
             // println!("Rebuilding (next): {:?}",self.bank.rebuild());
             
         }

@@ -519,7 +519,7 @@ use tokio::time::timeout;
 #[tokio::main]
 async fn main() {
     let time_out_seconds = 5; // set timeout
-    let paths = fs::read_dir("./test").unwrap(); // "./benchmarks/lib/General_Track/bv-conditional-inverses/"
+    let paths = fs::read_dir("./test/good").unwrap(); // "./benchmarks/lib/General_Track/bv-conditional-inverses/"
     let mut count = 0;
     for path in paths {
         let unwraped_path = path.unwrap().path();
@@ -607,12 +607,17 @@ async fn synth_file(filename: &str) -> Option<u128>{
                 
             }
 
-            let candidates = g_enum.sexp_vec_id(quick_correct.unwrap());
+            let candidates_sexp = g_enum.sexp_vec_id(quick_correct.unwrap());
+            let mut candidates: Vec<String> = candidates_sexp.iter().map(|x| x.to_string()).collect();  
+            let candiate_two = g_enum.one_from_class(quick_correct.unwrap());
+            candidates.push(candiate_two.to_string());
             println!("quick correct id: {}", quick_correct.unwrap());
             println!("number of counter examples present: {}", list_cex.len());
             if candidates.len()==0{
                println!("eclass: {:?}", g_enum.bank[quick_correct.unwrap()])
             }
+            
+
             for candidate in candidates {
                 println!("Candidate: {}", candidate.to_string());
                 // println!("{:?}", ctx.variables);
