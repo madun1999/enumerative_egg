@@ -66,7 +66,7 @@ impl RHS {
         res
     }
 
-    fn instantiate(&self, substance: Vec<&Id>, bank:&mut EGraph<BVLanguage, ConstantFoldBV>) -> BVLanguage {
+    fn instantiate(&self, substance: Vec<&Id>, bank: &EGraph<BVLanguage, ConstantFoldBV>) -> BVLanguage {
         // Given rule, terms to be substituted, and 
         // substance is the terms to be inserted, term_id is a dictionary of terminal -> id 
         let mut i = 0;
@@ -81,7 +81,7 @@ impl RHS {
                     i+=1;
                     (*substance.get(i-1).unwrap()).clone()
                 }
-                Term::Terminal(a) => bank.add(BVLanguage::from_op(&a.0, vec![]).unwrap())
+                Term::Terminal(a) => bank.lookup(BVLanguage::from_op(&a.0, vec![]).unwrap()).unwrap()
             }
         ).collect();
         let val = match self.0.get(0).unwrap() {
@@ -214,12 +214,14 @@ pub struct GEnumerator{ // TODO: Make it generic <L: From Op,V:Something> , BV f
     grammar: Grammar,
     pub bank: EGraph<BVLanguage, ConstantFoldBV>,
     started_enumeration: bool,
+    iteration: usize,
 }
 
 impl GEnumerator {
 
     // pub fn one_iter(&mut self) -> &EGraph<BVLanguage, ConstantFoldBV> {
     pub fn one_iter(&mut self, start: &Instant) {
+        self.iteration += 1;
         // If not started, put all terminals in the bank
         if !self.started_enumeration {
             self.started_enumeration = true;
@@ -259,11 +261,15 @@ impl GEnumerator {
                 term_to_ids.insert(NonTerminal("Start".to_string()), self.bank.classes().map(|x| x.id).collect());
                 // let a  = non_terms.iter().map(|x| term_to_ids.get(x).unwrap()).multi_cartesian_product();
                 // println!("258 {:?}", prod);
-                for substance in non_terms.iter().map(|x| term_to_ids.get(x).unwrap()).multi_cartesian_product() {
+                for substance in non_terms.iter().map(|x| term_to_ids.get(x).unwrap()).multi_cartesian_product()
+                  .filter(|x| x.iter().map(|id| self.bank[**id].data.1).sum::<usize>() == self.iteration - 1)
+                {
+                    //   println!("On iteration {:?}, substance size sum {:?}", self.iteration, substance.iter().map(|id| self.bank[**id].data.1).sum::<usize>());
+                    //   println!("Substituting {:?} into {:?}", substance, rhs);
                     // println!("260");
                     //   for <p1, p2, .., pk> in b[A1] x b[A2] x .. x b[An]:
                     //       add rhs[A1 -> p1, .. , Ak -> pk] to the list of new enodes
-                    new_enodes.push(rhs.instantiate(substance, &mut self.bank));
+                    new_enodes.push(rhs.instantiate(substance, &self.bank));
                 }
             }    
             // println!("266");
@@ -304,6 +310,7 @@ impl GEnumerator{
             grammar: grammar,
             true_obs: vec![],
             started_enumeration: false,
+            iteration: 0
             
         } 
     }
@@ -326,6 +333,7 @@ impl GEnumerator{
         let analysis = ConstantFoldBV::new(self.pts.clone());
         self.bank = EGraph::new(analysis);
         self.started_enumeration = false;
+        self.iteration = 0;
     }
 
     pub fn sexp_vec(&mut self, id: usize) -> Vec<Sexp> {
@@ -355,8 +363,8 @@ impl GEnumerator{
          extractor.find_best(id).1
     }
 
-    pub fn get_data_from_class(&mut self, id: Id) -> Observations<BVValue> {
-        self.bank[id].data.clone()
+    pub fn get_observation_from_class(&mut self, id: Id) -> Observations<BVValue> {
+        self.bank[id].data.0.clone()
     }
 
     pub fn get_pts(&mut self) -> Vec<BTreeMap<String, BVValue>> {

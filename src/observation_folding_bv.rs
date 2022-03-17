@@ -6,6 +6,7 @@ use egg::Analysis;
 use egg::DidMerge;
 use egg::Id;
 use egg::Language;
+use egg::merge_min;
 
 use crate::grammar::Observations;
 use crate::language_bv;
@@ -100,23 +101,24 @@ impl ConstantFoldBV {
 
 
 impl Analysis<BVLanguage> for ConstantFoldBV {
-    type Data = Observations<BVValue>;
+    type Data = (Observations<BVValue>, usize);
 
     fn make(egraph: &egg::EGraph<BVLanguage, Self>, enode: &BVLanguage) -> Self::Data {
-        let x = |i: &Id| &egraph[*i].data;
+        let x = |i: &Id| &egraph[*i].data.0;
+        let esize = |i: &Id| &egraph[*i].data.1;
         let assignments = &egraph.analysis.assignments;
         let analysis = &egraph.analysis;
         let new_obs = match enode {
-            BVLanguage::Bool(c) => Observations(vec![BVValue::Bool(*c); assignments.len()]),
-            BVLanguage::BV(lit) => Observations(vec![BVValue::BV(lit.clone()); assignments.len()]),
+            BVLanguage::Bool(c) => (Observations(vec![BVValue::Bool(*c); assignments.len()]), 1),
+            BVLanguage::BV(lit) => (Observations(vec![BVValue::BV(lit.clone()); assignments.len()]), 1),
             BVLanguage::Var(var) => {
                 // println!("{:?}", assignments);
-                Observations(assignments.iter().map(|assignment| {
+                (Observations(assignments.iter().map(|assignment| {
                     // println!("{}", var.to_string());
                     assignment.get(&var.to_string()).unwrap().clone()
-                }).collect())
+                }).collect()), 1)
             },
-            BVLanguage::Obs(i) => analysis.find_obs_from_id(*i).unwrap().clone(),
+            BVLanguage::Obs(i) => (analysis.find_obs_from_id(*i).unwrap().clone(), 100000), // infinity 100000
             BVLanguage::BVConcat([a,b]) => {
                 let k = x(a).iter().zip(x(b).iter()).map(|val| {
                     if let (BVValue::BV(bva), BVValue::BV(bvb)) = val {
@@ -125,7 +127,7 @@ impl Analysis<BVLanguage> for ConstantFoldBV {
                         panic!("{:?} not two BVs", val);
                     }
                 }).collect();
-                Observations(k)
+                (Observations(k), 1 + esize(a) + esize(b))
             },
             BVLanguage::BVNot([a]) => {
                 let k = x(a).iter().map(|val| {
@@ -135,7 +137,7 @@ impl Analysis<BVLanguage> for ConstantFoldBV {
                         panic!("{:?} not a BV", val);
                     }
                 }).collect();
-                Observations(k)
+                (Observations(k), 1 + esize(a))
             },
             BVLanguage::BVNeg([a]) => {
                 let k = x(a).iter().map(|val| {
@@ -145,7 +147,7 @@ impl Analysis<BVLanguage> for ConstantFoldBV {
                         panic!("{:?} not a BV", val);
                     }
                 }).collect();
-                Observations(k)
+                (Observations(k), 1 + esize(a))
             },
             BVLanguage::BVAnd([a,b]) => {
                 let k = x(a).iter().zip(x(b).iter()).map(|val| {
@@ -155,7 +157,7 @@ impl Analysis<BVLanguage> for ConstantFoldBV {
                         panic!("{:?} not two BVs", val);
                     }
                 }).collect();
-                Observations(k)
+                (Observations(k), 1 + esize(a) + esize(b))
             },
             BVLanguage::BVOr([a,b]) => {
                 let k = x(a).iter().zip(x(b).iter()).map(|val| {
@@ -165,7 +167,7 @@ impl Analysis<BVLanguage> for ConstantFoldBV {
                         panic!("{:?} not two BVs", val);
                     }
                 }).collect();
-                Observations(k)
+                (Observations(k), 1 + esize(a) + esize(b))
             },
             BVLanguage::BVMul([a,b]) => {
                 let k = x(a).iter().zip(x(b).iter()).map(|val| {
@@ -175,7 +177,7 @@ impl Analysis<BVLanguage> for ConstantFoldBV {
                         panic!("{:?} not two BVs", val);
                     }
                 }).collect();
-                Observations(k)
+                (Observations(k), 1 + esize(a) + esize(b))
             },
             BVLanguage::BVAdd([a,b]) => {
                 let k = x(a).iter().zip(x(b).iter()).map(|val| {
@@ -185,7 +187,7 @@ impl Analysis<BVLanguage> for ConstantFoldBV {
                         panic!("{:?} not two BVs", val);
                     }
                 }).collect();
-                Observations(k)
+                (Observations(k), 1 + esize(a) + esize(b))
             },
             BVLanguage::BVSub([a,b]) => {
                 let k = x(a).iter().zip(x(b).iter()).map(|val| {
@@ -195,7 +197,7 @@ impl Analysis<BVLanguage> for ConstantFoldBV {
                         panic!("{:?} not two BVs", val);
                     }
                 }).collect();
-                Observations(k)
+                (Observations(k), 1 + esize(a) + esize(b))
             },
             BVLanguage::BVDiv([a,b]) => {
                 let k = x(a).iter().zip(x(b).iter()).map(|val| {
@@ -205,7 +207,7 @@ impl Analysis<BVLanguage> for ConstantFoldBV {
                         panic!("{:?} not two BVs", val);
                     }
                 }).collect();
-                Observations(k)
+                (Observations(k), 1 + esize(a) + esize(b))
             },
             BVLanguage::BVRem([a,b]) => {
                 let k = x(a).iter().zip(x(b).iter()).map(|val| {
@@ -215,7 +217,7 @@ impl Analysis<BVLanguage> for ConstantFoldBV {
                         panic!("{:?} not two BVs", val);
                     }
                 }).collect();
-                Observations(k)
+                (Observations(k), 1 + esize(a) + esize(b))
             },
             BVLanguage::BVShl([a,b]) => {
                 let k = x(a).iter().zip(x(b).iter()).map(|val| {
@@ -225,7 +227,7 @@ impl Analysis<BVLanguage> for ConstantFoldBV {
                         panic!("{:?} not two BVs", val);
                     }
                 }).collect();
-                Observations(k)
+                (Observations(k), 1 + esize(a) + esize(b))
             },
             BVLanguage::BVShr([a,b]) => {
                 let k = x(a).iter().zip(x(b).iter()).map(|val| {
@@ -235,7 +237,7 @@ impl Analysis<BVLanguage> for ConstantFoldBV {
                         panic!("{:?} not two BVs", val);
                     }
                 }).collect();
-                Observations(k)
+                (Observations(k), 1 + esize(a) + esize(b))
             },
             BVLanguage::BVUlt([a,b]) => {
                 let k = x(a).iter().zip(x(b).iter()).map(|val| {
@@ -245,7 +247,7 @@ impl Analysis<BVLanguage> for ConstantFoldBV {
                         panic!("{:?} not two BVs", val);
                     }
                 }).collect();
-                Observations(k)
+                (Observations(k), 1 + esize(a) + esize(b))
             },
             _ => todo!(),
         };
@@ -255,12 +257,14 @@ impl Analysis<BVLanguage> for ConstantFoldBV {
     }
 
     fn merge(&mut self, a: &mut Self::Data, b: Self::Data) -> egg::DidMerge {
-        assert_eq!(*a,b);
-        DidMerge(false, false)
+        let (aobs, asize) = a;
+        let (bobs, bsize) = b;
+        assert_eq!(*aobs,bobs);
+        merge_min(asize, bsize)
     }
     
     fn modify(egraph: &mut egg::EGraph<BVLanguage, Self>, id: egg::Id) {
-        let new_obs = egraph[id].data.clone();
+        let (new_obs, new_size) = egraph[id].data.clone();
         let analysis = &mut egraph.analysis;
         let result = analysis.add_obs(new_obs);
         let added = egraph.add(BVLanguage::Obs(result));
