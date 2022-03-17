@@ -209,12 +209,13 @@ pub struct SimpleEnumerator {
 
 #[derive(Debug)]
 pub struct GEnumerator{ // TODO: Make it generic <L: From Op,V:Something> , BV for now
-    pts: Vec<Assignment<BVValue>>,
+    pub pts: BTreeSet<Assignment<BVValue>>,
     true_obs: Vec<Observations<BVValue>>,
     grammar: Grammar,
     pub bank: EGraph<BVLanguage, ConstantFoldBV>,
     started_enumeration: bool,
     iteration: usize,
+    keep_ast_count: usize,
 }
 
 impl GEnumerator {
@@ -262,7 +263,7 @@ impl GEnumerator {
                 // let a  = non_terms.iter().map(|x| term_to_ids.get(x).unwrap()).multi_cartesian_product();
                 // println!("258 {:?}", prod);
                 for substance in non_terms.iter().map(|x| term_to_ids.get(x).unwrap()).multi_cartesian_product()
-                  .filter(|x| x.iter().map(|id| self.bank[**id].data.1).sum::<usize>() == self.iteration - 1)
+                  .filter(|x| x.iter().map(|id| self.bank[**id].data.1.iter().next().unwrap().0).sum::<usize>() == self.iteration - 1)
                 {
                     //   println!("On iteration {:?}, substance size sum {:?}", self.iteration, substance.iter().map(|id| self.bank[**id].data.1).sum::<usize>());
                     //   println!("Substituting {:?} into {:?}", substance, rhs);
@@ -286,12 +287,14 @@ impl GEnumerator {
                         return;
                     }
                 }
+
                 // println!("{:?}", enode);
                 self.bank.add(enode);
             }
             // println!("273");
             // rebuild bank
             self.bank.rebuild();
+            // println!("297");
             // println!("Rebuilding (next): {:?}",self.bank.rebuild());
             
         }
@@ -302,21 +305,22 @@ impl GEnumerator {
 }
 
 impl GEnumerator{
-    pub fn new(grammar: Grammar) -> GEnumerator{
+    pub fn new(grammar: Grammar, keep_ast_count: usize) -> GEnumerator{
         
         GEnumerator { 
             bank: EGraph::new(ConstantFoldBV::default()),
-            pts: vec![],
+            pts: BTreeSet::from([]),
             grammar: grammar,
             true_obs: vec![],
             started_enumeration: false,
-            iteration: 0
+            iteration: 0,
+            keep_ast_count,
             
         } 
     }
     pub fn add_pts(&mut self, a: Assignment<BVValue>) {
         // Call reset bank after adding all the pts
-        self.pts.push(a);
+        self.pts.insert(a);
     }
 
     pub fn add_pts_vec(&mut self, pts: &Vec<(String, String, String)>) {
@@ -325,51 +329,53 @@ impl GEnumerator{
         for pt in pts {
             new_pts.insert(pt.0.clone(), BVValue::BV(BVLiteral::from_str(&pt.2).unwrap()));
         }
-        self.pts.push(new_pts);
+        self.pts.insert(new_pts);
     }
 
     pub fn reset_bank(&mut self) {
         // Call this after adding all the pts
-        let analysis = ConstantFoldBV::new(self.pts.clone());
+        let analysis = ConstantFoldBV::new(self.pts.clone(), self.keep_ast_count);
         self.bank = EGraph::new(analysis);
         self.started_enumeration = false;
         self.iteration = 0;
     }
 
-    pub fn sexp_vec(&mut self, id: usize) -> Vec<Sexp> {
-        // enumerate a vector of Sexps in eclass id
-        self.bank.classes().skip(id).next().unwrap().sexp_vect(&self.bank, &Default::default(), 0)
-    }
-
-    pub fn sexp_vec_id(&mut self, id: Id) -> Vec<Sexp> {
-        // enumerate a vector of Sexps in eclass id
-        self.bank[id].sexp_vect(&self.bank, &Default::default(), 0)
-    }
-
-    pub fn one_per_class(&mut self) -> Vec<(Id,RecExpr<BVLanguage>)> {
-        // take one expression from every class
-        let cost_fn = NoObsAstSizeCostFn::default();
-        let extractor = Extractor::new(&self.bank, cost_fn);
+    pub fn one_per_class(&mut self) -> Vec<(Id, usize, String)> {
+        // take one expression from every class, usize is size  (cost) of String
+        // let cost_fn = NoObsAstSizeCostFn::default();
+        // let extractor = Extractor::new(&self.bank, cost_fn);
         self.bank.classes().map(|x| {
-            (x.id, extractor.find_best(x.id).1)
+            (x.id, x.data.1.iter().next().unwrap().0, x.data.1.iter().next().unwrap().1.clone())
         }).collect()
-    }
+    } 
 
-    pub fn one_from_class(&mut self, id: Id) -> RecExpr<BVLanguage> {
+    pub fn one_per_new_class(&mut self) -> Vec<(Id, usize, String)> {
+        // take one expression from every class, usize is size  (cost) of String
+        // let cost_fn = NoObsAstSizeCostFn::default();
+        // let extractor = Extractor::new(&self.bank, cost_fn);
+        self.bank.classes().map(|x| {
+            (x.id, x.data.1.iter().next().unwrap().0, x.data.1.iter().next().unwrap().1.clone())
+        }).filter(|(_,size,_)| size >= &self.iteration).collect()
+    } 
+
+    pub fn one_from_class(&mut self, id: Id) -> String {
          // take one expression from every class
-         let cost_fn = NoObsAstSizeCostFn::default();
-         let extractor = Extractor::new(&self.bank, cost_fn);
-         
-         extractor.find_best(id).1
+         self.get_multi_from_class(id, )[0].clone()
     }
 
     pub fn get_observation_from_class(&mut self, id: Id) -> Observations<BVValue> {
         self.bank[id].data.0.clone()
     }
 
-    pub fn get_pts(&mut self) -> Vec<BTreeMap<String, BVValue>> {
+    pub fn get_pts(&mut self) -> BTreeSet<BTreeMap<String, BVValue>> {
         self.bank.analysis.assignments.clone()
     }
+
+    pub fn get_multi_from_class(&mut self, id: Id) -> Vec<String> {
+        self.bank[id].data.1.iter().map(|(_,sexp)| sexp.clone()).collect()
+    }
+
+    
     
 }
 

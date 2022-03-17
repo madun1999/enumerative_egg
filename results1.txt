@@ -1,0 +1,11 @@
+("./test/find_inv_bvsge_bvadd_4bit.sl", 1919, 3, "(bvsub #b0111 s)")
+("./test/find_inv_bvsge_bvand_4bit.sl", 371, 1, "#b0111")
+("./test/find_inv_bvsge_bvashr0_4bit.sl", 367, 1, "#b0111")
+("./test/find_inv_bvsge_bvashr1_4bit.sl", 2741, 3, "(bvand #b1000 s)")
+("./test/find_inv_bvsge_bvlshr0_4bit.sl", 1642, 3, "(bvshl t s)")
+Failed ./test/find_inv_bvsge_bvlshr1_4bit.sl
+Failed ./test/find_inv_bvsge_bvmul_4bit.sl
+("./test/find_inv_bvsge_bvneg_4bit.sl", 659, 2, "(bvneg t)")
+("./test/find_inv_bvsge_bvnot_4bit.sl", 184, 1, "#b1000")
+("./test/find_inv_bvsge_bvor_4bit.sl", 239, 1, "t")
+("./test/find_inv_bvsge_bvshl0_4bit.sl", 6094, 3, "(bvlshr #b0111 s)")

@@ -534,11 +534,10 @@ fn main() -> Result<(), String> {
     Ok(())
 }
 
-fn run_once(path: DirEntry) -> Result<(String, u128, u32, String), String>{
+
+fn run_once(filename: &str, KEEP_AST_COUNT: usize) -> Result<(String, u128, u32, String), String>{
     let start = Instant::now();
 
-    let path_unwrapped = path.path();
-    let filename = path_unwrapped.to_str().unwrap();
     println!("Running file {}", &filename);
     let mut ctx = parse_file_and_create_ctx(filename);
     // println!("{:?}\n", ctx);
@@ -546,7 +545,7 @@ fn run_once(path: DirEntry) -> Result<(String, u128, u32, String), String>{
     // println!("{:?}\n", ctx);
 
     let mut list_cex: Vec<Vec<(String, String, String)>> = Vec::new();
-    let mut candidates: Vec<(String, String, String)> = Vec::new(); // TODO: to egg
+    // let mut candidates: Vec<(String, String, String)> = Vec::new(); // TODO: to egg
     if ctx.synth_funcs.get(0).is_none() {return Err("no function".to_string());}
     let mut g = Grammar::default();
     let synth_funcs = ctx.synth_funcs.clone();
@@ -559,22 +558,22 @@ fn run_once(path: DirEntry) -> Result<(String, u128, u32, String), String>{
     g = Grammar::new_from_sexpr(&func.grammar);
 
     g.calc_terminals();
-    let mut g_enum = GEnumerator::new(g.clone());
+    let mut g_enum = GEnumerator::new(g.clone(), KEEP_AST_COUNT); // keep 10
     // ctx.solver.define_fun(func.symbol.clone(), func.params.clone(), func.return_type.clone(), "#xF"); // what's this?
     // parse_define(&mut ctx);
     g_enum.reset_bank();
 
-    let mut count : u32 = 0;
-
+    let mut count;
     loop {
-        // reset bank
-
         // run until there is a class that might be correct
-        // g_enum.one_iter();
-        let mut quick_correct: Option<Id> = None;
+        // for _ in 0..count {
+        //     g_enum.one_iter(&start);
+        // }
         count = 0;
-        let mut candidate: RecExpr<BVLanguage> = RecExpr::default();
-        while quick_correct.is_none(){
+        let mut quick_corrects: Vec<Id> = vec![];
+        
+        // let mut candidate: String = String::default();
+        while quick_corrects.len() == 0{
 
             let elapsed = start.elapsed();
             //println!("elapsed: {}", elapsed.as_secs());
@@ -582,16 +581,17 @@ fn run_once(path: DirEntry) -> Result<(String, u128, u32, String), String>{
                 return Err(format!("timeout: {}", elapsed.as_millis()));
             }
             g_enum.one_iter(&start);
-            for (id, sexp) in g_enum.one_per_class() {
+            for (id, _sexp_size, sexp) in g_enum.one_per_new_class() {
                 //println!("{}", sexp.to_string());
                 // let correct = "(bvsub t s)".to_string();
+                // println!("Quick verifying {:?}", sexp);
                 ctx.solver.define_fun(func.symbol.clone(), func.params.clone(), func.return_type.clone(), sexp.to_string());
                 // println!("{:?}", quick_verify(&mut ctx, &list_cex));
                 parse_define(&mut ctx);
                 if quick_verify(&mut ctx, &list_cex){
                     //println!("sexp: {}", sexp.to_string());
-                    quick_correct = Some(id);
-                    candidate = sexp.clone();
+                    quick_corrects.push(id);
+                    // candidate = sexp.clone();
                     ctx.solver.reset();
                     break;
                 }
@@ -603,7 +603,8 @@ fn run_once(path: DirEntry) -> Result<(String, u128, u32, String), String>{
             }
             count += 1;
             println!("Quick check iteration: {}", count);
-            let bank = &g_enum.bank;
+
+            // let bank = &g_enum.bank;
             // if let Some(correct_id) = bank.lookup_expr(&RecExpr::from_str("(bvsub t s)").unwrap()) {
             //     println!("Found correct eclass: {:?}", correct_id);
             //     println!("Best from that eclass is: {}", g_enum.one_from_class(correct_id));
@@ -612,64 +613,68 @@ fn run_once(path: DirEntry) -> Result<(String, u128, u32, String), String>{
             // }
 
         }
+        for quick_correct in quick_corrects {
+            let candidates = g_enum.get_multi_from_class(quick_correct);
+            println!("quick correct id: {}", quick_correct);
+            println!("number of counter examples present: {}", g_enum.pts.len());
+            //if candidates.len()==0{
+            //    println!("eclass: {:?}", g_enum.bank[quick_correct.unwrap()])
+            //}
+            for candidate in candidates {
+                println!("Candidate: {}", candidate.to_string());
+                // println!("{:?}", ctx.variables);
+                // TODO: quick verify on counter example set
+                // if !quick_verify(&mut ctx, &list_cex){
+                //     ctx.solver.reset(); // reset needed because our function will be different.
+                //     continue;
+                // }
+                ctx.solver.define_fun(func.symbol.clone(), func.params.clone(), func.return_type.clone(), candidate.to_string());
+                parse_define(&mut ctx);
+                // Get counter-example TODO: refactor into a function
+                parse_constraints(&mut ctx);
+                let result = ctx.solver.check_sat();
+                let mut cex = Vec::new();
+                match result {
+                    Ok(res) => {
+                        //println!("ok");
+                        if !res{
+                            ctx.solved = true;
+                            ctx.solution = candidate.to_string();
+                            println!("No counter-example");
+                            break;
+                        }
+                        let model = ctx.solver.get_model().unwrap();
+                        //`Vec<(std::string::String, Vec<(std::string::String, std::string::String)>, std::string::String, std::string::String)>`
+                        /// "s", [], "(_ BitVec 4)", "#xd"
+                        /// "t", [], "(_ BitVec 4)", "#x5"
+                        /// "min", [], "(_ BitVec 4)", "(bvnot (bvlshr (bvnot #x0) #x1))" ??
+                        /// "max", [], "(_ BitVec 4)", "(bvnot (bvnot (bvlshr (bvnot #x0) #x1)))" ??
 
-        //let candidates = g_enum.sexp_vec_id(quick_correct.unwrap());
-        println!("quick correct id: {}", quick_correct.unwrap());
-        println!("number of counter examples present: {}", list_cex.len());
-        //if candidates.len()==0{
-        //    println!("eclass: {:?}", g_enum.bank[quick_correct.unwrap()])
-        //}
-        //for candidate in candidates {
-        println!("Candidate: {}", candidate.to_string());
-        // println!("{:?}", ctx.variables);
-        // TODO: quick verify on counter example set
-        // if !quick_verify(&mut ctx, &list_cex){
-        //     ctx.solver.reset(); // reset needed because our function will be different.
-        //     continue;
-        // }
-        ctx.solver.define_fun(func.symbol.clone(), func.params.clone(), func.return_type.clone(), candidate.to_string());
-        parse_define(&mut ctx);
-        // Get counter-example TODO: refactor into a function
-        parse_constraints(&mut ctx);
-        let result = ctx.solver.check_sat();
-        let mut cex = Vec::new();
-        match result {
-            Ok(res) => {
-                //println!("ok");
-                if !res{
-                    ctx.solved = true;
-                    ctx.solution = candidate.to_string();
-                    println!("No counter-example");
-                    break;
-                }
-                let model = ctx.solver.get_model().unwrap();
-                //`Vec<(std::string::String, Vec<(std::string::String, std::string::String)>, std::string::String, std::string::String)>`
-                /// "s", [], "(_ BitVec 4)", "#xd"
-                /// "t", [], "(_ BitVec 4)", "#x5"
-                /// "min", [], "(_ BitVec 4)", "(bvnot (bvlshr (bvnot #x0) #x1))" ??
-                /// "max", [], "(_ BitVec 4)", "(bvnot (bvnot (bvlshr (bvnot #x0) #x1)))" ??
-
-                println!("Counter-example:");
-                let range = ctx.variables.len();
-                // println!("Counter-example: {:?}", model);
-                for res in &model.to_vec() {
-                    if ctx.var_set.contains(&res.0) {
-                        cex.push((res.0.to_string(), res.2.to_string(), res.3.to_string()));
-                        println!("{} : {} -> {}", res.0, res.2, res.3);
+                        println!("Counter-example:");
+                        let range = ctx.variables.len();
+                        // println!("Counter-example: {:?}", model);
+                        for res in &model.to_vec() {
+                            if ctx.var_set.contains(&res.0) {
+                                cex.push((res.0.to_string(), res.2.to_string(), res.3.to_string()));
+                                println!("{} : {} -> {}", res.0, res.2, res.3);
+                            }
+                        }
+                        // cex = cex.iter().filter(|x|var_set.contains(&x.0)).collect();
+                        g_enum.add_pts_vec(&cex);
+                        list_cex.push(cex);
+                        ctx.solver.reset();
+                        //break;
+                    },
+                    Err(e) => {
+                        println!("error {}", e);
                     }
                 }
-                // cex = cex.iter().filter(|x|var_set.contains(&x.0)).collect();
-                g_enum.add_pts_vec(&cex);
-                list_cex.push(cex);
-                ctx.solver.reset();
-                //break;
-            },
-            Err(e) => {
-                println!("error {}", e);
+
+            }
+            if ctx.solved{
+                break;
             }
         }
-
-        //}
         if ctx.solved{
             break;
         }
@@ -691,100 +696,104 @@ fn run_once(path: DirEntry) -> Result<(String, u128, u32, String), String>{
 
 
 fn run(){
+    for KEEP_AST_COUNT in 0.. {
+        let paths = fs::read_dir("./test").unwrap(); // "./benchmarks/lib/General_Track/bv-conditional-inverses/"
+        let mut fail_count = 0;
+        let mut success_count = 0;
+        let mut solutions = vec![];
 
-    let paths = fs::read_dir("./test").unwrap(); // "./benchmarks/lib/General_Track/bv-conditional-inverses/"
-    let mut fail_count = 0;
-    let mut success_count = 0;
-    let mut solutions = vec![];
+        let path = format!("results{}.txt", KEEP_AST_COUNT);
+        let mut output = File::create(path).unwrap();
+        for path in paths {
+            // if fail_count > 10{
+            //     break;
+            // }
+            let path_unwraped = path.unwrap().path();
+            let filename = path_unwraped.to_str().unwrap();
 
-    let path = "results.txt";
-    let mut output = File::create(path).unwrap();
-    for path in paths {
-        // if fail_count > 10{
-        //     break;
-        // }
-
-        let ret = run_once(path.unwrap());
-        match ret {
-            Ok(solution) => {
-                success_count += 1;
-                println!("Solution: {:?}", solution);
-                writeln!(output, "{:?}", solution);
-                solutions.push(solution);
-            },
-            Err(msg) => {
-                println!("{}", msg);
-                fail_count += 1;
+            let ret = run_once(filename, KEEP_AST_COUNT);
+            match ret {
+                Ok(solution) => {
+                    success_count += 1;
+                    println!("Solution: {:?}", solution);
+                    writeln!(output, "{:?}", solution);
+                    solutions.push(solution);
+                },
+                Err(msg) => {
+                    println!("{}", msg);
+                    writeln!(output, "Failed {}", filename);
+                    fail_count += 1;
+                }
             }
+
+
+            println!("success_count {}", success_count);
+            println!("fail_count {}", fail_count);
+
+            // Wrap the future with a `Timeout` set to expire in 10 milliseconds.
+
+            // let (sender, receiver) = mpsc::channel();
+            // let t = thread::spawn(move || {
+            //     match sender.send(run_once(path.unwrap())) {
+            //         Ok(()) => {
+            //             success_count += 1;
+            //         }, // everything good
+            //         Err(_) => {
+            //
+            //             println!("did not receive value within 100 seconds");
+            //             fail_count += 1;
+            //         }, // we have been released, don't panic
+            //     }
+            // });
+
+            // thread::sleep(Duration::from_secs(1));
+            // receiver.recv_timeout(Duration::from_secs(1));
+            // t.join().unwrap();
+            //let ret = timeout(Duration::from_secs(1), task).await;
+
         }
 
-
-        println!("success_count {}", success_count);
-        println!("fail_count {}", fail_count);
-
-        // Wrap the future with a `Timeout` set to expire in 10 milliseconds.
-
-        // let (sender, receiver) = mpsc::channel();
-        // let t = thread::spawn(move || {
-        //     match sender.send(run_once(path.unwrap())) {
-        //         Ok(()) => {
-        //             success_count += 1;
-        //         }, // everything good
-        //         Err(_) => {
         //
-        //             println!("did not receive value within 100 seconds");
-        //             fail_count += 1;
-        //         }, // we have been released, don't panic
+        // while let Some(task) = task_list.next().await {
+        //     // let ret = task.unwrap();
+        //     // match ret {
+        //     //     Ok(solution) => {
+        //     //         success_count += 1;
+        //     //         println!("Solution: {:?}", solution);
+        //     //         writeln!(output, "{:?}", solution);
+        //     //         solutions.push(solution);
+        //     //     },
+        //     //     Err(msg) => {
+        //     //         println!("{}", msg);
+        //     //         fail_count += 1;
+        //     //     }
+        //     // }
+        //     //
+        //     //
+        //     // println!("success_count {}", success_count);
+        //     // println!("fail_count {}", fail_count);
+        // }
+
+        // loop {
+        //     match task_list.next().await {
+        //         Some(result) => {
+        //             println!("    finished future [{}]", result);
+        //             if cnt < 20 {
+        //                 workers.push( random_sleep(cnt) );
+        //             }
+        //         },
+        //         None => {
+        //             println!("Done!");
+        //             break;
+        //         }
         //     }
-        // });
+        // }
 
-        // thread::sleep(Duration::from_secs(1));
-        // receiver.recv_timeout(Duration::from_secs(1));
-        // t.join().unwrap();
-        //let ret = timeout(Duration::from_secs(1), task).await;
-
+        //let stream = CommandStream::new(&data.as_slice()[..], concrete::SyntaxBuilder, Some("".to_string()));
+        //let commands = stream.collect::<Result<Vec<_>, _>>().unwrap();
+        writeln!(output, "{}, {}", success_count, fail_count);
+        println!("End with KEEP_AST_COUNT {}", KEEP_AST_COUNT);
     }
-
-    //
-    // while let Some(task) = task_list.next().await {
-    //     // let ret = task.unwrap();
-    //     // match ret {
-    //     //     Ok(solution) => {
-    //     //         success_count += 1;
-    //     //         println!("Solution: {:?}", solution);
-    //     //         writeln!(output, "{:?}", solution);
-    //     //         solutions.push(solution);
-    //     //     },
-    //     //     Err(msg) => {
-    //     //         println!("{}", msg);
-    //     //         fail_count += 1;
-    //     //     }
-    //     // }
-    //     //
-    //     //
-    //     // println!("success_count {}", success_count);
-    //     // println!("fail_count {}", fail_count);
-    // }
-
-    // loop {
-    //     match task_list.next().await {
-    //         Some(result) => {
-    //             println!("    finished future [{}]", result);
-    //             if cnt < 20 {
-    //                 workers.push( random_sleep(cnt) );
-    //             }
-    //         },
-    //         None => {
-    //             println!("Done!");
-    //             break;
-    //         }
-    //     }
-    // }
-
-    //let stream = CommandStream::new(&data.as_slice()[..], concrete::SyntaxBuilder, Some("".to_string()));
-    //let commands = stream.collect::<Result<Vec<_>, _>>().unwrap();
-    writeln!(output, "{}, {}", success_count, fail_count);
-    println!("End");
 }
 
 

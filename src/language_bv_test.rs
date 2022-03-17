@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, str::FromStr};
+use std::{collections::{BTreeMap, BTreeSet}, str::FromStr};
 
 use egg::{RecExpr, EGraph, Symbol};
 
@@ -19,7 +19,7 @@ pub fn test_observation_folding() {
         ("y".to_string(), bv2.clone())
     ]);
 
-    let mut egraph: EGraph<BVLanguage, ConstantFoldBV> = EGraph::new(ConstantFoldBV::new(vec![assignment1]));
+    let mut egraph: EGraph<BVLanguage, ConstantFoldBV> = EGraph::new(ConstantFoldBV::new(BTreeSet::from([assignment1]), 10));
     let a = egraph.add(BVLanguage::Var(Symbol::from("x")));
     let b = egraph.add(BVLanguage::Var(Symbol::from("y")));
     let c = egraph.add(BVLanguage::BVAnd([a,b]));
@@ -45,7 +45,7 @@ pub fn test_enumerator() {
         ("y".to_string(), bvv2.clone())
     ]);
 
-    let mut egraph: EGraph<BVLanguage, ConstantFoldBV> = EGraph::new(ConstantFoldBV::new(vec![assignment1]));
+    let mut egraph: EGraph<BVLanguage, ConstantFoldBV> = EGraph::new(ConstantFoldBV::new(BTreeSet::from([assignment1]), 10));
     let a = egraph.add(BVLanguage::Var(Symbol::from("x")));
     let b = egraph.add(BVLanguage::Var(Symbol::from("y")));
     let c = egraph.add(BVLanguage::BVAnd([a,b]));

@@ -33,7 +33,7 @@ pub fn test_enumerator_sexpr(sexpr: &Vec<Value>) {
     g.calc_terminals();
     println!("{:?}", g);
 
-    let mut g_enum = GEnumerator::new(g.clone());
+    let mut g_enum = GEnumerator::new(g.clone(), 10);
     let bv1 = BVValue::BV(BVLiteral::from_str("#x3").unwrap());
     let bv2 = BVValue::BV(BVLiteral::from_str("#x5").unwrap());
     let assignment1 = BTreeMap::from([
@@ -100,7 +100,7 @@ pub fn test_enumerator() {
     g.calc_terminals();
     println!("{:?}", g);
 
-    let mut g_enum = GEnumerator::new(g.clone());
+    let mut g_enum = GEnumerator::new(g.clone(), 10);
     let bv1 = BVValue::BV(BVLiteral::from_str("#b00001111").unwrap());
     let bv2 = BVValue::BV(BVLiteral::from_str("#b00110011").unwrap());
     let bv3 = BVLiteral::from_str("#b00000011").unwrap();
@@ -135,12 +135,12 @@ pub fn test_enumerator() {
         // println!("Bank has these observations: {:?}", bank.analysis.id_obs);
     }
     // assert_eq!(g_enum.bank.number_of_classes(), 16);
-    let str_vec = g_enum.sexp_vec(4);
-    for sexp in &str_vec {
-        println!("{}", sexp);
-    }
-    // println!("{:?}", str_vec);
-    println!("Enumerating EClass 4: {:?}", str_vec)
+    // let str_vec = g_enum.sexp_vec(4);
+    // for sexp in &str_vec {
+    //     println!("{}", sexp);
+    // }
+    // // println!("{:?}", str_vec);
+    // println!("Enumerating EClass 4: {:?}", str_vec)
     
     
     // 
