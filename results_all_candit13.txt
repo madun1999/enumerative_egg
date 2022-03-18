@@ -1,0 +1,41 @@
+("./test/find_inv_bvsge_bvadd_4bit.sl", 2644, 3, "(bvsub #b0111 s)")
+("./test/find_inv_bvsge_bvand_4bit.sl", 144, 1, "#b0111")
+("./test/find_inv_bvsge_bvashr0_4bit.sl", 163, 1, "#b0111")
+("./test/find_inv_bvsge_bvashr1_4bit.sl", 4502, 3, "(bvand #b1000 s)")
+("./test/find_inv_bvsge_bvlshr0_4bit.sl", 2545, 3, "(bvshl t s)")
+Failed ./test/find_inv_bvsge_bvlshr1_4bit.sl
+Failed ./test/find_inv_bvsge_bvmul_4bit.sl
+("./test/find_inv_bvsge_bvneg_4bit.sl", 904, 2, "(bvneg t)")
+("./test/find_inv_bvsge_bvnot_4bit.sl", 215, 1, "#b1000")
+("./test/find_inv_bvsge_bvor_4bit.sl", 154, 1, "#b0111")
+("./test/find_inv_bvsge_bvshl0_4bit.sl", 3032, 3, "(bvlshr #b0111 s)")
+Failed ./test/find_inv_bvsge_bvshl1_4bit.sl
+Failed ./test/find_inv_bvsge_bvudiv0_4bit.sl
+Failed ./test/find_inv_bvsge_bvudiv1_4bit.sl
+("./test/find_inv_bvsge_bvurem0_4bit.sl", 304, 1, "t")
+Failed ./test/find_inv_bvsge_bvurem1_4bit.sl
+("./test/find_inv_bvsgt_bvadd_4bit.sl", 2845, 3, "(bvsub #b0111 s)")
+("./test/find_inv_bvsgt_bvand_4bit.sl", 155, 1, "#b0111")
+("./test/find_inv_bvsgt_bvashr0_4bit.sl", 149, 1, "#b0111")
+("./test/find_inv_bvsgt_bvashr1_4bit.sl", 2697, 3, "(bvand #b1000 s)")
+("./test/find_inv_bvsgt_bvlshr0_4bit.sl", 4473, 3, "(bvshl #b0111 s)")
+Failed ./test/find_inv_bvsgt_bvlshr1_4bit.sl
+Failed ./test/find_inv_bvsgt_bvmul_4bit.sl
+("./test/find_inv_bvsgt_bvneg_4bit.sl", 831, 2, "(bvnot t)")
+("./test/find_inv_bvsgt_bvor_4bit.sl", 142, 1, "#b0111")
+("./test/find_inv_bvsgt_bvshl0_4bit.sl", 5068, 3, "(bvlshr #b0111 s)")
+Failed ./test/find_inv_bvsgt_bvshl1_4bit.sl
+Failed ./test/find_inv_bvsgt_bvudiv0_4bit.sl
+Failed ./test/find_inv_bvsgt_bvudiv1_4bit.sl
+("./test/find_inv_bvsgt_bvurem0_4bit.sl", 2843, 3, "(bvneg (bvnot t))")
+Failed ./test/find_inv_bvsgt_bvurem1_4bit.sl
+("./test/find_inv_bvsle_bvadd_4bit.sl", 3191, 3, "(bvsub t s)")
+("./test/find_inv_bvsle_bvand_4bit.sl", 199, 1, "#b1000")
+("./test/find_inv_bvsle_bvashr0_4bit.sl", 212, 1, "#b1000")
+("./test/find_inv_bvsle_bvashr1_4bit.sl", 18454, 4, "(bvand #b1000 (bvnot s))")
+("./test/find_inv_bvsle_bvlshr0_4bit.sl", 304, 1, "t")
+("./test/find_inv_bvsle_bvlshr1_4bit.sl", 23055, 4, "(bvand #b1000 (bvnot t))")
+Failed ./test/find_inv_bvsle_bvmul_4bit.sl
+("./test/find_inv_bvsle_bvnot_4bit.sl", 152, 1, "#b0111")
+("./test/find_inv_bvsle_bvor_4bit.sl", 225, 1, "#b1000")
+("./test/find_inv_bvsle_bvshl0_4bit.sl", 2420, 3, "(bvlshr t s)")

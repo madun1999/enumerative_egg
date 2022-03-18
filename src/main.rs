@@ -593,8 +593,8 @@ fn run_once(filename: &str, KEEP_AST_COUNT: usize) -> Result<(String, u128, u32,
                     //println!("sexp: {}", sexp.to_string());
                     quick_corrects.push(id);
                     // candidate = sexp.clone();
-                    ctx.solver.reset();
-                    break;
+                    // ctx.solver.reset();
+                    // break;
                 }
                 ctx.solver.reset();
                 let elapsed = start.elapsed();
@@ -703,7 +703,7 @@ fn run(){
         let mut success_count = 0;
         let mut solutions = vec![];
 
-        let path = format!("results{}.txt", KEEP_AST_COUNT);
+        let path = format!("results_all_candit{}.txt", KEEP_AST_COUNT);
         let mut output = File::create(path).unwrap();
         for path in paths {
             // if fail_count > 10{
